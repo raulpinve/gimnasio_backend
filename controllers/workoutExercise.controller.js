@@ -104,6 +104,7 @@ exports.getWorkoutExercises = async (req, res, next) => {
             `SELECT COUNT(*) FROM workout_exercises WHERE workout_id = $1`,
             [workoutId]
         );
+        console.log(totalRows);
 
         const totalRecords = parseInt(totalRows[0].count);
         const totalPages = Math.ceil(totalRecords / pageSize);
@@ -134,6 +135,7 @@ exports.getWorkoutActiveExercises = async (req, res, next) => {
                 e.name as "exerciseName",
                 e.type as "exerciseType",
                 e.avatar_thumbnail as "exerciseAvatarThumbnail",
+                e.avatar as "exerciseAvatar",
                 we.id as "workoutExerciseId", 
                 re.target_sets as "targetSets",
                 re.target_reps as "targetReps",
@@ -184,6 +186,7 @@ exports.getWorkoutActiveExercises = async (req, res, next) => {
                 e.name as "exerciseName",
                 e.type as "exerciseType",
                 e.avatar_thumbnail as "exerciseAvatarThumbnail",
+                e.avatar as "exerciseAvatar",
                 we.id as "workoutExerciseId",
                 NULL as "targetSets",
                 NULL as "targetReps",
@@ -231,6 +234,8 @@ exports.getWorkoutActiveExercises = async (req, res, next) => {
 
         const { rows } = await pool.query(query, [workoutId]);
 
+        console.log(rows);
+
         return res.status(200).json({
             statusCode: 200,
             status: "success",
@@ -238,6 +243,7 @@ exports.getWorkoutActiveExercises = async (req, res, next) => {
         });
 
     } catch (error) {
+        console.log(error)
         next(error);
     }
 };

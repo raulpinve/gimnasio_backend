@@ -5,13 +5,13 @@ const path = require('path');
 require("dotenv").config({ quiet: true });
 const cookieParser = require("cookie-parser");
 const { initDB } = require('./initDB');
-// app.use(cors({
-//   origin: process.env.CORS_ORIGIN,
-//   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-//   allowedHeaders: ["Content-Type", "Authorization"],
-//   credentials: true
-// }));
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+// app.use(cors());
 app.use(express.json()); 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true })); 
@@ -53,13 +53,14 @@ app.use("/api/cardio-logs", cardioLogsRoutes);
 app.use("/api/users", userRoutes);
 app.use(handleErrorResponse);
 
+const port = process.env.PORT || 5000;
+
 (async () => {
   await initDB();
-})();
 
-const port = process.env.PORT || 3000;
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Servidor escuchando en http://localhost:${port}`);
-});
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`Servidor escuchando en http://localhost:${port}`);
+  });
+})();
 
 module.exports = app; 
