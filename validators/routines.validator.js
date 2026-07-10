@@ -23,7 +23,6 @@ exports.validateRoutineId = async (req, res, next) => {
         next();
 
     } catch (error) {
-        console.log("Error en validateRoutineId:", error);
         next(error);
     }
 };

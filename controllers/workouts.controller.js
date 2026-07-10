@@ -13,6 +13,7 @@ exports.createWorkout = async (req, res, next) => {
 
         const defaultName = routine?.name || "Entrenamiento libre";
 
+        // 1. Crear el workout principal
         const { rows: rowsWorkout } = await client.query(
             `INSERT INTO workouts (name, user_id, routine_id, started_at)
              VALUES ($1, $2, $3, NOW())
@@ -24,6 +25,18 @@ exports.createWorkout = async (req, res, next) => {
             ]
         );
 
+        const newWorkoutId = rowsWorkout[0].id;
+
+        // 2. Si viene de una rutina, copiar los ejercicios directamente en la base de datos
+        if(routine && routineId){
+            await client.query(
+                `INSERT INTO workout_exercises (workout_id, exercise_id) 
+                    SELECT $1, exercise_id 
+                    FROM routine_exercises
+                    WHERE routine_id = $2`, 
+                [newWorkoutId, routineId],
+            );
+        }
         await client.query("COMMIT");
 
         return res.status(201).json({
@@ -165,27 +178,48 @@ exports.finishWorkout = async (req, res, next) => {
     try {
         await client.query("BEGIN");
 
-        // 🟢 ESTÁNDAR DE LA INDUSTRIA: Se guarda el momento exacto del clic usando NOW()
+        // Validar que todos los ejercicios tengan al menos un registro
+        const validation = await client.query(
+            `
+            SELECT we.id
+            FROM workout_exercises we
+            LEFT JOIN workout_sets ws
+                ON ws.workout_exercise_id = we.id
+            LEFT JOIN cardio_logs cl
+                ON cl.workout_exercise_id = we.id
+            WHERE we.workout_id = $1
+            GROUP BY we.id
+            HAVING COUNT(ws.id) = 0
+               AND COUNT(cl.id) = 0;
+            `,
+            [workoutId]
+        );
+
+        if (validation.rowCount > 0) {
+            await client.query("ROLLBACK");
+            return throwBadRequestError(undefined, "Debes registrar al menos una serie o un registro de cardio en todos los ejercicios antes de finalizar el entrenamiento.")
+        }
+
         const resFinish = await client.query(
-            `UPDATE workouts 
-                SET finished_at = NOW() 
-                WHERE id = $1 AND finished_at IS NULL
-                RETURNING *;`,
+            `
+            UPDATE workouts
+            SET finished_at = NOW()
+            WHERE id = $1
+              AND finished_at IS NULL
+            RETURNING *;
+            `,
             [workoutId]
         );
 
         if (resFinish.rowCount === 0) {
-            return res.status(404).json({
-                status: "error",
-                message: "Workout no encontrado o ya finalizado anteriormente."
-            });
+            await client.query("ROLLBACK");
+            throwNotFoundError("Workout no encontrado o ya finalizado.");
         }
-
         await client.query("COMMIT");
 
         return res.status(200).json({
             status: "success",
-            message: "Entrenamiento finalizado exitosamente al momento del clic.",
+            message: "Entrenamiento finalizado exitosamente.",
             data: resFinish.rows[0]
         });
 
@@ -196,8 +230,6 @@ exports.finishWorkout = async (req, res, next) => {
         client.release();
     }
 };
-
-
 
 exports.deleteWorkout = async (req, res, next) => {
     try {

@@ -461,7 +461,6 @@ exports.deleteExercise = async (req, res, next) => {
         });
 
     } catch (error) {
-        console.error(error);
         next(error);
     }
 };

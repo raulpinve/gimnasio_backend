@@ -104,7 +104,6 @@ exports.getWorkoutExercises = async (req, res, next) => {
             `SELECT COUNT(*) FROM workout_exercises WHERE workout_id = $1`,
             [workoutId]
         );
-        console.log(totalRows);
 
         const totalRecords = parseInt(totalRows[0].count);
         const totalPages = Math.ceil(totalRecords / pageSize);
@@ -193,13 +192,25 @@ exports.getWorkoutActiveExercises = async (req, res, next) => {
                 NULL as "targetWeight",
                 
                 -- For extras, we ONLY look for the last weight lifted in history
-                COALESCE((
-                    SELECT ws_last.weight FROM workout_sets ws_last
-                    JOIN workout_exercises we_last ON ws_last.workout_exercise_id = we_last.id
-                    JOIN workouts w_last ON we_last.workout_id = w_last.id
-                    WHERE we_last.exercise_id = e.id AND w_last.user_id = w.user_id
-                    ORDER BY ws_last.created_at DESC LIMIT 1
-                ), 0) as "suggestedWeight",
+                COALESCE(
+                    re.target_weight,
+                    (
+                        SELECT ws_last.weight
+                        FROM workout_sets ws_last
+                        JOIN workout_exercises we_last
+                            ON ws_last.workout_exercise_id = we_last.id
+                        JOIN workouts w_last
+                            ON we_last.workout_id = w_last.id
+                        WHERE we_last.exercise_id = e.id
+                        AND w_last.user_id = w.user_id
+                        AND w_last.finished_at IS NOT NULL
+                        AND w_last.id <> w.id
+                        ORDER BY w_last.finished_at DESC,
+                                ws_last.created_at DESC
+                        LIMIT 1
+                    ),
+                    0
+                ) AS "suggestedWeight",
 
                 -- 🟢 OBTENER LA UNIDAD DEL ÚLTIMO SET REALIZADO (TAMBIÉN PARA EXTRAS)
                 COALESCE((
@@ -233,9 +244,6 @@ exports.getWorkoutActiveExercises = async (req, res, next) => {
         `;
 
         const { rows } = await pool.query(query, [workoutId]);
-
-        console.log(rows);
-
         return res.status(200).json({
             statusCode: 200,
             status: "success",
@@ -243,12 +251,9 @@ exports.getWorkoutActiveExercises = async (req, res, next) => {
         });
 
     } catch (error) {
-        console.log(error)
         next(error);
     }
 };
-
-
 
 exports.deleteWorkoutExercise = async (req, res, next) => {
     try {

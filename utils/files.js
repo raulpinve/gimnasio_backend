@@ -54,7 +54,6 @@ exports.eliminarArchivo = async (filePath) => {
         // Archivo no existe → OK (idempotente)
         if (err.code === "ENOENT") return true;
 
-        // console.error("Error al eliminar el archivo:", err);
         return false;
     }
 };
