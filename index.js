@@ -5,22 +5,25 @@ const path = require('path');
 require("dotenv").config({ quiet: true });
 const cookieParser = require("cookie-parser");
 const { initDB } = require('./initDB');
+
+const { initializeApp, cert } = require('firebase-admin/app');
+const serviceAccount = require('./firebase-credentials.json');
+
+initializeApp({
+  credential: cert(serviceAccount)
+});
+
 app.use(cors({
   origin: process.env.CORS_ORIGIN,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
+
 // app.use(cors());
 app.use(express.json()); 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true })); 
-
-
-// app.use((req, res, next) => {
-//     console.log(`${req.method} ${req.originalUrl}`);
-//     next();
-// });
 
 
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));

@@ -72,7 +72,6 @@ exports.getRoutineExercise = async (req, res, next) => {
         if (rows.length === 0) {
             return throwNotFoundError("Ejercicio de rutina no encontrado.");
         }
-
         return res.status(200).json({
             statusCode: 200,
             status: "success",
@@ -152,6 +151,8 @@ exports.updateRoutineExercise = async (req, res, next) => {
         });
 
     } catch (error) {
+        console.log(error);
+
         next(error);
     }
 };

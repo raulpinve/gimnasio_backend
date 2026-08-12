@@ -24,6 +24,17 @@ CREATE TABLE users (
     reset_token_expiration TIMESTAMPTZ
 );
 
+-- -- 1. Añade la columna para enlazar a Firebase (Obligatorio)
+-- ALTER TABLE users ADD COLUMN firebase_uid VARCHAR(128) UNIQUE;
+
+-- -- 2. Quita la obligación de la contraseña (Ya que Firebase maneja el login)
+-- ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
+
+-- -- 3. Quita la obligación del username (Para que el usuario lo elija después en la app)
+-- ALTER TABLE users ALTER COLUMN username DROP NOT NULL;
+
+
+
 -- =========================
 -- EXERCISES
 -- =========================

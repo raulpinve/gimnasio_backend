@@ -15,8 +15,7 @@ const {
 // Create workout set
 router.post(
     "/",
-    validateWorkoutId, 
-    validateExerciseId,
+    validateWorkoutExerciseId,
     checkWorkoutNotClosed,
     validateExerciseType("strength"),
     validateCreateWorkoutSet,

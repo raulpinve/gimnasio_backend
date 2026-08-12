@@ -6,8 +6,7 @@ exports.createCardioLog = async (req, res, next) => {
     const client = await pool.connect();
     try {
         const {
-            workoutId, // Cambiamos workoutExerciseId por estos dos
-            exerciseId,
+            workoutExerciseId,
             durationSeconds,
             distanceKm,
             calories,
@@ -16,19 +15,6 @@ exports.createCardioLog = async (req, res, next) => {
 
         await client.query("BEGIN");
 
-        // 1. Obtener o crear el workout_exercise (ancla)
-        const { rows: weRows } = await client.query(
-            `INSERT INTO workout_exercises (workout_id, exercise_id)
-             VALUES ($1, $2)
-             ON CONFLICT (workout_id, exercise_id) 
-             DO UPDATE SET workout_id = EXCLUDED.workout_id 
-             RETURNING id`,
-            [workoutId, exerciseId]
-        );
-
-        const workoutExerciseId = weRows[0].id;
-
-        // 2. Insertar el log de cardio vinculado
         const { rows } = await client.query(
             `INSERT INTO cardio_logs (
                 workout_exercise_id,

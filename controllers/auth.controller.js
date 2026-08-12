@@ -5,39 +5,72 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { snakeToCamel } = require("../utils/utils.helper");
+const admin = require('firebase-admin');
+const { getAuth } = require('firebase-admin/auth');
 
 exports.authenticateToken = async (req, res, next) => {
     try {
         const authHeader = req.headers["authorization"];
-        if (!authHeader) throwUnauthorizedError("No autorizado.");
 
-        const token = authHeader.startsWith("Bearer ")
-            ? authHeader.slice(7)
-            : authHeader;
+        if (!authHeader) {
+            throwUnauthorizedError("Token de autenticación requerido.");
+        }
 
-        let payload;
+        if (!authHeader.startsWith("Bearer ")) {
+            throwUnauthorizedError("El token debe usar el esquema Bearer.");
+        }
+
+        const token = authHeader.slice(7).trim();
+        // console.log(token);
+
+        if (!token) {
+            throwUnauthorizedError("Token de autenticación requerido.");
+        }
+
+        let decodedToken;
 
         try {
-            payload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+            decodedToken = await getAuth().verifyIdToken(token);
         } catch (error) {
             throwUnauthorizedError("Token inválido o expirado.");
         }
 
-        const { rows } = await pool.query(
-            `SELECT id FROM users
-             WHERE id = $1`,
-            [payload.id]
+        const firebaseUid = decodedToken.uid;
+        let { rows } = await pool.query(
+            `SELECT id FROM users WHERE firebase_uid = $1`,
+            [firebaseUid]
         );
 
-        if(rows.length === 0) {
-            throwUnauthorizedError("Usuario no encontrado.");
+        if (rows.length === 0) {
+            const email = decodedToken.email;
+            const name = decodedToken.name || "Usuario";
+
+            const insertResult = await pool.query(
+                `INSERT INTO users (
+                    firebase_uid,
+                    email,
+                    first_name,
+                    last_name
+                )
+                VALUES ($1, $2, $3, $4)
+                RETURNING id, firebase_uid, email, first_name, last_name`,
+                [
+                    firebaseUid,
+                    email,
+                    name,
+                    "",
+                ]
+            );
+
+            rows = insertResult.rows;
+        } else {
         }
 
         req.user = {
             id: rows[0].id,
+            firebaseUid,
         };
         next();
-
     } catch (error) {
         next(error);
     }
