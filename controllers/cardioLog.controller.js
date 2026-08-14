@@ -73,16 +73,16 @@ exports.getCardioLog = async (req, res, next) => {
 
 exports.getAllCardioLogs = async (req, res, next) => {
     try {
-        const { workoutExerciseId, exerciseId } = req.query;
+        const { workoutExerciseId } = req.query;
 
         // Fetch logs by joining with the workout_exercises anchor table
         const { rows } = await pool.query(
             `SELECT cl.* 
              FROM cardio_logs cl
              JOIN workout_exercises we ON cl.workout_exercise_id = we.id
-             WHERE we.workout_id = $1 AND we.exercise_id = $2
+             WHERE we.id = $1
              ORDER BY cl.created_at ASC`, 
-            [workoutExerciseId, exerciseId]
+            [workoutExerciseId]
         );
 
         return res.status(200).json({

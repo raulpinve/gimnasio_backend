@@ -73,15 +73,15 @@ exports.getWorkoutSet = async (req, res, next) => {
 
 exports.getAllWorkoutSets = async (req, res, next) => {
     try {
-        const { workoutExerciseId, exerciseId } = req.query;
+        const { workoutExerciseId } = req.query;
         const { rows } = await pool.query(
             `SELECT ws.* 
                 FROM workout_sets ws
                 JOIN workout_exercises we ON ws.workout_exercise_id = we.id
-                WHERE we.id = $1 AND we.exercise_id = $2
+                WHERE we.id = $1
                 ORDER BY ws.created_at ASC;
             `, [
-            workoutExerciseId, exerciseId
+            workoutExerciseId
         ]);
 
         return res.status(200).json({
