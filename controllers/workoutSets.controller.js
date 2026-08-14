@@ -47,13 +47,13 @@ exports.createWorkoutSet = async (req, res, next) => {
 
 exports.getWorkoutSet = async (req, res, next) => {
     try {
-        const { workoutSetId } = req.params;
+        const { workoutExerciseId } = req.params;
 
         const { rows } = await pool.query(
             `SELECT *
              FROM workout_sets
              WHERE id = $1`,
-            [workoutSetId]
+            [workoutExerciseId]
         );
 
         if (rows.length === 0) {
@@ -73,15 +73,15 @@ exports.getWorkoutSet = async (req, res, next) => {
 
 exports.getAllWorkoutSets = async (req, res, next) => {
     try {
-        const { workoutId, exerciseId } = req.query;
+        const { workoutExerciseId, exerciseId } = req.query;
         const { rows } = await pool.query(
             `SELECT ws.* 
                 FROM workout_sets ws
                 JOIN workout_exercises we ON ws.workout_exercise_id = we.id
-                WHERE we.workout_id = $1 AND we.exercise_id = $2
+                WHERE we.id = $1 AND we.exercise_id = $2
                 ORDER BY ws.created_at ASC;
             `, [
-            workoutId, exerciseId
+            workoutExerciseId, exerciseId
         ]);
 
         return res.status(200).json({

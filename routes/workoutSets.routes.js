@@ -32,8 +32,7 @@ router.get(
 // Get all workout sets
 router.get(
     "/",
-    validateExerciseId, 
-    validateWorkoutId,
+    validateWorkoutExerciseId, 
     workoutSetsController.getAllWorkoutSets
 );
 

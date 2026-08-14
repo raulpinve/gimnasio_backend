@@ -73,16 +73,7 @@ exports.getCardioLog = async (req, res, next) => {
 
 exports.getAllCardioLogs = async (req, res, next) => {
     try {
-        const { workoutId, exerciseId } = req.query;
-
-        // Verify that both identifiers are present
-        if (!workoutId || !exerciseId) {
-            return res.status(400).json({ 
-                statusCode: 400,
-                status: "error",
-                message: "workoutId and exerciseId are required" 
-            });
-        }
+        const { workoutExerciseId, exerciseId } = req.query;
 
         // Fetch logs by joining with the workout_exercises anchor table
         const { rows } = await pool.query(
@@ -91,7 +82,7 @@ exports.getAllCardioLogs = async (req, res, next) => {
              JOIN workout_exercises we ON cl.workout_exercise_id = we.id
              WHERE we.workout_id = $1 AND we.exercise_id = $2
              ORDER BY cl.created_at ASC`, 
-            [workoutId, exerciseId]
+            [workoutExerciseId, exerciseId]
         );
 
         return res.status(200).json({

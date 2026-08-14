@@ -33,8 +33,7 @@ router.get(
 // Obtener todos los logs de cardio
 router.get(
     "/",
-    validateExerciseId, 
-    validateWorkoutId,
+    validateWorkoutExerciseId, 
     cardioLogsController.getAllCardioLogs
 );
 
