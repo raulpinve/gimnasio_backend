@@ -145,27 +145,11 @@ exports.deleteWorkoutSet = async (req, res, next) => {
             [workoutSetId]
         );
 
-        if (setRows.length === 0) return throwNotFoundError("Set not found.");
-        const weId = setRows[0].workout_exercise_id;
+        if (setRows.length === 0) return throwNotFoundError("Ejercicio no encontrado.");
+
 
         // 2. Delete the specific workout set
         await client.query("DELETE FROM workout_sets WHERE id = $1", [workoutSetId]);
-
-        // 3. Check if the exercise anchor still has any remaining activity (sets or cardio logs)
-        const { rows: remainingSets } = await client.query(
-            "SELECT id FROM workout_sets WHERE workout_exercise_id = $1 LIMIT 1", 
-            [weId]
-        );
-        const { rows: remainingLogs } = await client.query(
-            "SELECT id FROM cardio_logs WHERE workout_exercise_id = $1 LIMIT 1", 
-            [weId]
-        );
-
-        // 4. If the exercise has no more records, remove the workout_exercise entry
-        if (remainingSets.length === 0 && remainingLogs.length === 0) {
-            await client.query("DELETE FROM workout_exercises WHERE id = $1", [weId]);
-        }
-
         await client.query("COMMIT");
 
         return res.status(200).json({

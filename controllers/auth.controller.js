@@ -21,7 +21,6 @@ exports.authenticateToken = async (req, res, next) => {
         }
 
         const token = authHeader.slice(7).trim();
-        // console.log(token);
 
         if (!token) {
             throwUnauthorizedError("Token de autenticación requerido.");
@@ -35,41 +34,11 @@ exports.authenticateToken = async (req, res, next) => {
             throwUnauthorizedError("Token inválido o expirado.");
         }
 
-        const firebaseUid = decodedToken.uid;
-        let { rows } = await pool.query(
-            `SELECT id FROM users WHERE firebase_uid = $1`,
-            [firebaseUid]
-        );
-
-        if (rows.length === 0) {
-            const email = decodedToken.email;
-            const name = decodedToken.name || "Usuario";
-
-            const insertResult = await pool.query(
-                `INSERT INTO users (
-                    firebase_uid,
-                    email,
-                    first_name,
-                    last_name
-                )
-                VALUES ($1, $2, $3, $4)
-                RETURNING id, firebase_uid, email, first_name, last_name`,
-                [
-                    firebaseUid,
-                    email,
-                    name,
-                    "",
-                ]
-            );
-
-            rows = insertResult.rows;
-        } else {
-        }
-
         req.user = {
-            id: rows[0].id,
-            firebaseUid,
+            firebaseUid: decodedToken.uid,
+            email: decodedToken.email,
         };
+
         next();
     } catch (error) {
         next(error);
@@ -183,15 +152,27 @@ exports.login = async (req, res, next) => {
 
 exports.me = async (req, res, next) => {
     try {
-        const userId = req.user.id;
+        const { firebaseUid } = req.user;
 
-        // Obtener información del usuario
-        const { rows } = await pool.query(`
-            SELECT id, first_name, last_name, username, email FROM users
-            WHERE id = $1 
-        `, [userId]);
+        const { rows } = await pool.query(
+            `
+            SELECT
+                id,
+                firebase_uid,
+                first_name,
+                last_name,
+                username,
+                email,
+                avatar,
+                avatar_thumbnail
+            FROM users
+            WHERE firebase_uid = $1
+            `,
+            [firebaseUid]
+        );
 
         const user = rows[0];
+
         if (!user) {
             throwUnauthorizedError("El usuario no existe o fue eliminado.");
         }
@@ -201,18 +182,84 @@ exports.me = async (req, res, next) => {
             status: "success",
             data: {
                 id: user.id,
+                uid: user.firebase_uid,
                 firstName: user.first_name,
-                middleName: user.middle_name,
                 lastName: user.last_name,
-                secondLastName: user.second_last_name,
                 username: user.username,
                 email: user.email,
-                emailVerified: user.email_verified,
-                companyId: user.company_id,
-                role: user.role,
-            }
+                avatar: user.avatar,
+                avatarThumbnail: user.avatar_thumbnail,
+            },
         });
+    } catch (error) {
+        next(error);
+    }
+};
 
+exports.createMe = async (req, res, next) => {
+    try {
+        const { firstName, lastName, username } = req.body;
+        const { firebaseUid, email } = req.user;
+
+        const existingUser = await pool.query(
+            `
+            SELECT
+                id,
+                firebase_uid,
+                first_name,
+                last_name,
+                username,
+                email,
+                avatar,
+                avatar_thumbnail
+            FROM users
+            WHERE firebase_uid = $1
+            `,
+            [firebaseUid]
+        );
+
+        if (existingUser.rows.length > 0) {
+            return res.status(200).json({
+                statusCode: 200,
+                status: "success",
+                data: existingUser.rows[0],
+            });
+        }
+
+        const { rows } = await pool.query(
+            `
+            INSERT INTO users (
+                firebase_uid,
+                email,
+                first_name,
+                last_name,
+                username
+            )
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING
+                id,
+                firebase_uid,
+                first_name,
+                last_name,
+                username,
+                email,
+                avatar,
+                avatar_thumbnail
+            `,
+            [
+                firebaseUid,
+                email,
+                firstName,
+                lastName,
+                username,
+            ]
+        );
+
+        return res.status(201).json({
+            statusCode: 201,
+            status: "success",
+            data: rows[0],
+        });
     } catch (error) {
         next(error);
     }

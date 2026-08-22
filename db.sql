@@ -33,7 +33,15 @@ CREATE TABLE users (
 -- -- 3. Quita la obligación del username (Para que el usuario lo elija después en la app)
 -- ALTER TABLE users ALTER COLUMN username DROP NOT NULL;
 
+-- --4. 
+-- ALTER TABLE workouts
+-- DROP CONSTRAINT workouts_routine_id_fkey;
 
+-- ALTER TABLE workouts
+-- ADD CONSTRAINT workouts_routine_id_fkey
+-- FOREIGN KEY (routine_id)
+-- REFERENCES routines(id)
+-- ON DELETE SET NULL;
 
 -- =========================
 -- EXERCISES

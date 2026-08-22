@@ -145,26 +145,8 @@ exports.deleteCardioLog = async (req, res, next) => {
             throwNotFoundError("Ejercicio no encontrado.");
         }
 
-        const weId = logRows[0].workout_exercise_id;
-
         // 2. Delete the specific cardio log
         await client.query("DELETE FROM cardio_logs WHERE id = $1", [cardioLogId]);
-
-        // 3. Check if there are any records left for this anchor
-        const { rows: remainingSets } = await client.query(
-            "SELECT id FROM workout_sets WHERE workout_exercise_id = $1 LIMIT 1",
-            [weId]
-        );
-        
-        const { rows: remainingLogs } = await client.query(
-            "SELECT id FROM cardio_logs WHERE workout_exercise_id = $1 LIMIT 1",
-            [weId]
-        );
-
-        // 4. Clean up the anchor if empty
-        if (remainingSets.length === 0 && remainingLogs.length === 0) {
-            await client.query("DELETE FROM workout_exercises WHERE id = $1", [weId]);
-        }
 
         await client.query("COMMIT");
 
