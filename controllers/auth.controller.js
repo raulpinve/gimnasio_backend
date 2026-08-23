@@ -1,4 +1,4 @@
-const { throwUnauthorizedError } = require("../errors/throwHTTPErrors");
+const { throwUnauthorizedError, throwNotFoundError } = require("../errors/throwHTTPErrors");
 const { pool } = require("../initDB");
 const { generarTokenAutenticacion, generateAccessToken, compareHashedPassword } = require("../utils/hash.helper");
 const crypto = require("crypto");
@@ -34,8 +34,19 @@ exports.authenticateToken = async (req, res, next) => {
             throwUnauthorizedError("Token inválido o expirado.");
         }
 
+        const firebaseUid = decodedToken.uid;
+        let { rows } = await pool.query(
+            `SELECT id FROM users WHERE firebase_uid = $1`,
+            [firebaseUid]
+        );
+
+        if(rows.length == 0){
+            throwNotFoundError("El usuario no existe");
+        }
+
         req.user = {
             firebaseUid: decodedToken.uid,
+            id: rows[0].id,
             email: decodedToken.email,
         };
 

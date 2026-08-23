@@ -43,6 +43,7 @@ CREATE TABLE users (
 -- REFERENCES routines(id)
 -- ON DELETE SET NULL;
 
+
 -- =========================
 -- EXERCISES
 -- =========================
