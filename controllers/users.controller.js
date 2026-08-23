@@ -1,3 +1,4 @@
+const { throwBadRequestError } = require("../errors/throwHTTPErrors");
 const { pool } = require("../initDB");
 const { snakeToCamel } = require("../utils/utils.helper");
 
@@ -58,44 +59,30 @@ exports.getUserStats = async (req, res, next) => {
 
 exports.updateProfile = async (req, res, next) => {
     try {
-        const userId = req.user.id;
-        const { firstName, lastName, username, email } = req.body;
+        const userId = req.user.firebaseUid;
+        const { firstName, lastName } = req.body;
 
-        // 1. Validate if the new username or email already exist (in other users)
-        const { rows: existing } = await pool.query(
-            `SELECT id, username, email FROM users 
-             WHERE (LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($2)) 
-             AND id != $3`,
-            [username, email, userId]
+        const { rows } = await pool.query(
+            `UPDATE users
+             SET first_name = $1,
+                 last_name = $2
+             WHERE firebase_uid = $3
+             RETURNING id, first_name, last_name`,
+            [firstName.trim(), lastName.trim(), userId]
         );
 
-        if (existing.length > 0) {
-            const conflict = existing[0].email.toLowerCase() === email.toLowerCase() ? "email" : "username";
-            return res.status(409).json({ 
-                statusCode: 409, 
-                message: `El ${conflict} ya está registrado por otro atleta.` 
-            });
+        if (rows.length === 0) {
+            throwBadRequestError("Usuario no encontrado");
         }
 
-        // 2. Update (Using RETURNING to fetch the new data in one go)
-        const { rows } = await pool.query(
-            `UPDATE users 
-             SET first_name = $1, last_name = $2, username = $3, email = $4
-             WHERE id = $5
-             RETURNING id, first_name, last_name, username, email, avatar_thumbnail`,
-            [firstName.trim(), lastName.trim(), username.trim(), email.toLowerCase().trim(), userId]
-        );
-
-        // 3. Normalize to camelCase and respond
         const updatedUser = snakeToCamel(rows[0]);
 
         return res.json({
             statusCode: 200,
             status: "success",
             message: "Perfil actualizado",
-            data: updatedUser
+            data: updatedUser,
         });
-
     } catch (error) {
         next(error);
     }

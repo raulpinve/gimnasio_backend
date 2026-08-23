@@ -81,7 +81,5 @@ const validateLastName = () => [
 exports.validateUpdateProfile = [
     ...validateFirstName(),
     ...validateLastName(),
-    ...validateUsernameFormat(),
-    ...validateEmail(),
     handleValidationErrors
 ];
