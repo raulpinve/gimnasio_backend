@@ -13,7 +13,17 @@ exports.createWorkout = async (req, res, next) => {
 
         const defaultName = routine?.name || "Entrenamiento libre";
 
-        // 1. Crear el workout principal
+        // 1. Verificar si hay workouts abiertos
+        const {rows} = await client.query(
+            `SELECT * from workouts WHERE finished_at is NULL and user_id = $1`, [userId]
+        );
+
+        throwBadRequestError(
+            undefined,
+            "No se puede crear el workout porque ya tienes uno en curso."
+        );
+
+        // 2. Crear el workout principal
         const { rows: rowsWorkout } = await client.query(
             `INSERT INTO workouts (name, user_id, routine_id, started_at)
              VALUES ($1, $2, $3, NOW())
@@ -27,7 +37,7 @@ exports.createWorkout = async (req, res, next) => {
 
         const newWorkoutId = rowsWorkout[0].id;
 
-        // 2. Si viene de una rutina, copiar los ejercicios directamente en la base de datos
+        // 3. Si viene de una rutina, copiar los ejercicios directamente en la base de datos
         if(routine && routineId){
             await client.query(
                 `INSERT INTO workout_exercises (workout_id, exercise_id) 
