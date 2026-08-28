@@ -102,6 +102,26 @@ exports.getWorkout = async (req, res, next) => {
     }
 };
 
+exports.getWorkoutActive = async(req, res, next) => {
+    try {
+        const {id: userId} = req.user;
+        if(!userId){
+            return throwBadRequestError("userId es requerido.");
+        }
+        const query = `SELECT * FROM workouts WHERE finished_at IS NULL AND user_id = $1 LIMIT 1`;
+        const { rows } = await pool.query(query, [userId]);
+        
+        return res.status(200).json({
+            statusCode: 200,
+            status: "success",
+            data: rows.length > 0 ?  snakeToCamel(rows[0]) : []
+        });
+
+    } catch (error) {
+        next(error);
+    }
+} 
+
 exports.getAllWorkouts = async (req, res, next) => {
     try {
         const { id: userId } = req.user;

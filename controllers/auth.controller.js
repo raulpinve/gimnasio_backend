@@ -112,6 +112,7 @@ exports.register = async (req, res, next) => {
         });
 
     } catch (error) {
+
         next(error);
     }
 };

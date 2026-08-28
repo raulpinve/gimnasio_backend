@@ -18,6 +18,12 @@ router.post(
 
 // Get workout by ID
 router.get(
+    "/active",
+    workoutsController.getWorkoutActive
+);
+
+// Get workout by ID
+router.get(
     "/:workoutId",
     validateWorkoutId,
     workoutsController.getWorkout
