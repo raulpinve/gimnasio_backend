@@ -20,11 +20,10 @@ router.get("/me",
     authController.me
 )
 
-router.post(
-    "/me",
-    authController.authenticateToken,
-    authController.createMe
-);
+router.post('/me', 
+    authController.authenticateToken, 
+    authController.handleAuthMe
+); 
 
 router.post("/autheticate-token", 
     authController.authenticateToken,

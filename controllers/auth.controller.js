@@ -7,7 +7,6 @@ const bcrypt = require("bcrypt");
 const { snakeToCamel } = require("../utils/utils.helper");
 const admin = require('firebase-admin');
 const { getAuth } = require('firebase-admin/auth');
-
 exports.authenticateToken = async (req, res, next) => {
     try {
         const authHeader = req.headers["authorization"];
@@ -40,14 +39,13 @@ exports.authenticateToken = async (req, res, next) => {
             [firebaseUid]
         );
 
-        if(rows.length == 0){
-            throwNotFoundError("El usuario no existe");
-        }
-
+        // 🚨 CAMBIO AQUÍ: Ya no lanzamos error 404 si no existe.
+        // Guardamos la información básica de Firebase y dejamos continuar al controlador.
         req.user = {
             firebaseUid: decodedToken.uid,
-            id: rows[0].id,
+            id: rows.length > 0 ? rows[0].id : null, 
             email: decodedToken.email,
+            isNewUser: rows.length === 0 // Bandera útil para el controlador
         };
 
         next();
@@ -55,6 +53,41 @@ exports.authenticateToken = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.handleAuthMe = async (req, res, next) => {
+    try {
+        const { firebaseUid, email, isNewUser } = req.user;
+        let userId = req.user.id;
+
+        if (isNewUser) {
+            const { firstName, lastName, username } = req.body;
+
+            const { rows } = await pool.query(
+                `INSERT INTO users (firebase_uid, email, first_name, last_name, username) 
+                 VALUES ($1, $2, $3, $4, $5) 
+                 RETURNING id`,
+                [firebaseUid, email, firstName, lastName, username]
+            );
+            
+            userId = rows[0].id; 
+        }
+
+        const userQuery = await pool.query(`SELECT * FROM users WHERE id = $1`, [userId]);
+
+        res.status(200).json({
+            uid: userQuery.rows[0].firebase_uid, 
+            email: userQuery.rows[0].email,
+            firstName: userQuery.rows[0].first_name,
+            lastName: userQuery.rows[0].last_name,
+            username: userQuery.rows[0].username,
+        });
+
+    } catch (error) {
+        next(error); 
+    }
+};
+
+
 
 exports.register = async (req, res, next) => {
     try {

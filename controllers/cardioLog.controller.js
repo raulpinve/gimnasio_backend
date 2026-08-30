@@ -1,4 +1,4 @@
-const { throwNotFoundError } = require("../errors/throwHTTPErrors");
+const { throwNotFoundError, throwGoneError, throwBadRequestError } = require("../errors/throwHTTPErrors");
 const { pool } = require("../initDB");
 const { snakeToCamel } = require("../utils/utils.helper");
 

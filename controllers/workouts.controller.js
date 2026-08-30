@@ -17,11 +17,12 @@ exports.createWorkout = async (req, res, next) => {
         const {rows} = await client.query(
             `SELECT * from workouts WHERE finished_at is NULL and user_id = $1`, [userId]
         );
-
-        throwBadRequestError(
-            undefined,
-            "No se puede crear el workout porque ya tienes uno en curso."
-        );
+        if(rows.length > 0){
+            return throwBadRequestError(
+                undefined,
+                "No se puede crear el workout porque ya tienes uno en curso."
+            );
+        }
 
         // 2. Crear el workout principal
         const { rows: rowsWorkout } = await client.query(
@@ -121,11 +122,11 @@ exports.getWorkoutActive = async(req, res, next) => {
         const query = `SELECT * FROM workouts WHERE finished_at IS NULL AND user_id = $1 LIMIT 1`;
         const { rows } = await pool.query(query, [userId]);
         
-        return res.status(200).json({
-            statusCode: 200,
-            status: "success",
-            data: rows.length > 0 ?  snakeToCamel(rows[0]) : []
-        });
+    return res.status(200).json({
+        statusCode: 200,
+        status: "success",
+        data: rows.length > 0 ? snakeToCamel(rows[0]) : null
+    });
 
     } catch (error) {
         next(error);
@@ -135,51 +136,79 @@ exports.getWorkoutActive = async(req, res, next) => {
 exports.getAllWorkouts = async (req, res, next) => {
     try {
         const { id: userId } = req.user;
+
         if (!userId) {
             return throwBadRequestError("userId es requerido.");
         }
 
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
+        const routineId = req.query.routineId;
+
         const offset = (page - 1) * pageSize;
 
         const query = `
             SELECT w.*, r.name as routine_name,
-                -- Determina si el entrenamiento está abierto o cerrado
-                CASE 
+
+                CASE
                     WHEN w.finished_at IS NULL THEN 'abierto'
                     ELSE 'cerrado'
                 END AS estado,
 
-                -- Formatea la fecha en español: '23 de junio de 2026'
-                to_char(w.started_at, 'DD "de" TMMonth "de" YYYY') AS fecha,
-                
-                -- Calcula la duración y la formatea dinámicamente
-                CASE 
-                    -- Si no ha terminado, la duración es nula o indeterminada
+                to_char(
+                    w.started_at,
+                    'DD "de" TMMonth "de" YYYY'
+                ) AS fecha,
+
+                CASE
                     WHEN w.finished_at IS NULL THEN NULL
-                    
-                    -- Si dura menos de 1 hora, muestra solo los minutos: '20 min'
-                    WHEN w.finished_at - w.started_at < interval '1 hour' 
-                        THEN EXTRACT(MINUTE FROM (w.finished_at - w.started_at)) || ' min'
-                    
-                    -- Si dura 1 hora o más, muestra 'H:MMm' (ej. '1:20m')
-                    ELSE 
-                        EXTRACT(HOUR FROM (w.finished_at - w.started_at)) || ':' || 
-                        to_char(EXTRACT(MINUTE FROM (w.finished_at - w.started_at)), 'FM00') || 'm'
+
+                    WHEN w.finished_at - w.started_at < interval '1 hour'
+                        THEN EXTRACT(
+                            MINUTE FROM (w.finished_at - w.started_at)
+                        ) || ' min'
+
+                    ELSE
+                        EXTRACT(
+                            HOUR FROM (w.finished_at - w.started_at)
+                        ) || ':' ||
+                        to_char(
+                            EXTRACT(
+                                MINUTE FROM (w.finished_at - w.started_at)
+                            ),
+                            'FM00'
+                        ) || 'm'
                 END AS duracion
-            FROM workouts as w
-            LEFT JOIN routines as r
-            ON w.routine_id = r.id
+
+            FROM workouts AS w
+            LEFT JOIN routines AS r
+                ON w.routine_id = r.id
+
             WHERE w.user_id = $1
+                AND ($2::uuid IS NULL OR w.routine_id = $2)
+
             ORDER BY w.started_at DESC
-            LIMIT $2 OFFSET $3
+            LIMIT $3 OFFSET $4
         `;
 
-        const { rows } = await pool.query(query, [userId, pageSize, offset]);
+        const { rows } = await pool.query(query, [
+            userId,
+            routineId || null,
+            pageSize,
+            offset
+        ]);
+
         const { rows: totalRows } = await pool.query(
-            `SELECT COUNT(*) FROM workouts WHERE user_id = $1`,
-            [userId]
+            `
+                SELECT COUNT(*)
+                FROM workouts
+                WHERE user_id = $1
+                    AND ($2::uuid IS NULL OR routine_id = $2)
+            `,
+            [
+                userId,
+                routineId || null
+            ]
         );
 
         const totalRecords = parseInt(totalRows[0].count);
@@ -197,6 +226,7 @@ exports.getAllWorkouts = async (req, res, next) => {
         });
 
     } catch (error) {
+        console.log(error)
         next(error);
     }
 };
