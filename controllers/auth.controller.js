@@ -1,12 +1,23 @@
 import { findByFirebaseUid, createUserIfNotExists } from "../repositories/user.repository.js";
 import { successResponse } from "../utils/response.utils.js";
 
-export async function syncUser(req, res) {
-  const { uid, firstName, lastName } = req.user;
+export async function syncUser(req, res, next) {
+  try {
+    const { uid, email, firstName, lastName } = req.user;
 
-  await createUserIfNotExists(uid, firstName, lastName);
+    if (!email) {
+      return res.status(400).json({ error: "La cuenta no tiene email asociado" });
+    }
 
-  const user = await findByFirebaseUid(uid);
+    await createUserIfNotExists(uid, email, firstName, lastName);
+    const user = await findByFirebaseUid(uid);
 
-  return successResponse(res, 200, "Usuario sincronizado correctamente", user);
+    return successResponse(res, 200, "Usuario sincronizado correctamente", user);
+  } catch (error) {
+    // 23505 = unique_violation: ese email ya pertenece a otro usuario
+    if (error.code === "23505") {
+      return res.status(409).json({ error: "El email ya está registrado con otra cuenta" });
+    }
+    next(error);
+  }
 }

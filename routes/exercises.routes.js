@@ -1,60 +1,62 @@
 import { Router } from 'express';
 import {
-    createExercise, 
-    deleteExercise, 
-    getAllExercises, 
-    getExercise, 
-    getExerciseProgress, 
+    createExercise,
+    deleteExercise,
+    getAllExercises,
+    getExercise,
+    getExerciseProgress,
     updateExercise
 } from '../controllers/exercises.controller.js';
+import { requireUser, requireAdmin } from '../middlewares/auth.middlewares.js';
 import parseForm from '../middlewares/parseForm.middleware.js';
-
-const router = Router();
-
 import {
     validateExerciseId,
     validateCreateExercise,
     validateUpdateExercise
 } from '../validators/exercises.validator.js';
 
-// Create
-router.post(
-    "/",
-    parseForm(), 
-    validateCreateExercise,
-    createExercise
-);
+const router = Router();
 
-// Get all
+router.get("/", requireUser, getAllExercises);
+
 router.get(
-    "/",
-    getAllExercises
-);
-
-router.get("/:exerciseId/progress", 
+    "/:exerciseId/progress",
+    requireUser,
     validateExerciseId,
     getExerciseProgress
-)
+);
 
-// Get one
 router.get(
     "/:exerciseId",
+    requireUser,
     validateExerciseId,
     getExercise
 );
 
-// Update
+// ---------- Escritura: solo admin ----------
+router.post(
+    "/",
+    requireUser,
+    requireAdmin,
+    parseForm(),
+    validateCreateExercise,
+    createExercise
+);
+
 router.patch(
     "/:exerciseId",
-    parseForm(), 
+    requireUser,
+    requireAdmin,
+    parseForm(),
     validateExerciseId,
     validateUpdateExercise,
     updateExercise
 );
 
-// Delete
 router.delete(
     "/:exerciseId",
+    requireUser,
+    requireAdmin,
     validateExerciseId,
     deleteExercise
 );
