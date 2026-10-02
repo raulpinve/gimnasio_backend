@@ -1,65 +1,45 @@
 import camelcaseKeys from "camelcase-keys";
-import { pool } from "../init.db.js";
+import { pool } from "../initDB.js";
 
 /**
  * Finds a user by their firebase_uid.
+ * Returns null if the user does not exist.
  */
 export async function findByFirebaseUid(firebaseUid) {
   const { rows } = await pool.query(
     `SELECT
-       u.id,
-       u.firebase_uid,
-       u.first_name,
-       u.last_name,
-       u.registered_at,
-       st.id AS skin_type_id,
-       st.scale AS skin_type_scale,
-       st.name AS skin_type_name,
-       st.description AS skin_type_description,
-       st.med_j_m2 AS skin_type_med_j_m2
-     FROM users u
-     LEFT JOIN skin_types st ON st.id = u.skin_type_id
-     WHERE u.firebase_uid = $1`,
+       id,
+       firebase_uid,
+       first_name,
+       last_name,
+       username,
+       email,
+       avatar,
+       avatar_thumbnail,
+       created_at
+     FROM users
+     WHERE firebase_uid = $1`,
     [firebaseUid]
   );
 
-  if (!rows[0]) return null;
-
-  const row = camelcaseKeys(rows[0]);
-
-  const {
-    skinTypeId,
-    skinTypeScale,
-    skinTypeName,
-    skinTypeDescription,
-    skinTypeMedJM2,
-    ...user
-  } = row;
-
-  return {
-    ...user,
-    skinType: skinTypeId
-      ? {
-          id: skinTypeId,
-          scale: skinTypeScale,
-          name: skinTypeName,
-          description: skinTypeDescription,
-          medJm2: skinTypeMedJM2,
-        }
-      : null,
-  };
+  return rows[0] ? camelcaseKeys(rows[0]) : null;
 }
 
 /**
  * Updates one or more profile fields for a user, identified by firebase_uid.
- * Accepts: { firstName, lastName, skinTypeId }
+ * Accepts: { firstName, lastName, username, avatar, avatarThumbnail }
  * Returns the updated user, or null if the user does not exist.
+ *
+ * Note: if `username` is already taken, Postgres throws a unique violation
+ * (error.code === "23505") that the caller should handle (e.g. HTTP 409).
  */
 export async function updateUserProfile(firebaseUid, fields) {
   const columnMap = {
     firstName: "first_name",
     lastName: "last_name",
-    skinTypeId: "skin_type_id",
+    username: "username",
+    avatar: "avatar",
+    avatarThumbnail: "avatar_thumbnail",
   };
 
   const setClauses = [];
@@ -68,16 +48,30 @@ export async function updateUserProfile(firebaseUid, fields) {
 
   for (const [key, value] of Object.entries(fields)) {
     const column = columnMap[key];
-    if (!column) continue;
+    if (!column || value === undefined) continue;
     setClauses.push(`${column} = $${++i}`);
     values.push(value);
+  }
+
+  // Nothing to update: just return the current user
+  if (setClauses.length === 0) {
+    return findByFirebaseUid(firebaseUid);
   }
 
   const { rows } = await pool.query(
     `UPDATE users
      SET ${setClauses.join(", ")}
      WHERE firebase_uid = $1
-     RETURNING id, firebase_uid, first_name, last_name, skin_type_id`,
+     RETURNING
+       id,
+       firebase_uid,
+       first_name,
+       last_name,
+       username,
+       email,
+       avatar,
+       avatar_thumbnail,
+       created_at`,
     [firebaseUid, ...values]
   );
 
@@ -85,14 +79,21 @@ export async function updateUserProfile(firebaseUid, fields) {
 }
 
 /**
- * Creates a user if it doesn't already exist (idempotente).
- * Se usa en el flujo de sincronización post-login.
+ * Creates a user if it doesn't already exist (idempotent).
+ * Used in the post-login sync flow.
+ * `email` is required by the schema (NOT NULL); take it from the Firebase token.
+ * `username` stays NULL until the user chooses one in the app.
  */
-export async function createUserIfNotExists(firebaseUid, firstName, lastName) {
+export async function createUserIfNotExists(
+  firebaseUid,
+  email,
+  firstName,
+  lastName
+) {
   await pool.query(
-    `INSERT INTO users (firebase_uid, first_name, last_name)
-     VALUES ($1, $2, $3)
+    `INSERT INTO users (firebase_uid, email, first_name, last_name)
+     VALUES ($1, $2, $3, $4)
      ON CONFLICT (firebase_uid) DO NOTHING`,
-    [firebaseUid, firstName, lastName]
+    [firebaseUid, email, firstName, lastName]
   );
 }

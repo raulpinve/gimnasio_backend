@@ -7,10 +7,6 @@ import cookieParser from 'cookie-parser';
 import { fileURLToPath } from 'url';
 import { initDB } from './initDB.js';
 
-import { initializeApp, cert } from 'firebase-admin/app';
-import serviceAccount from './firebase-credentials.json' with { type: 'json' };
-
-import { authenticateToken } from './controllers/auth.controller.js';
 import handleErrorResponse from './errors/handleErrorResponse.js';
 
 import authRoutes from './routes/auth.routes.js';
@@ -27,10 +23,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-
-initializeApp({
-    credential: cert(serviceAccount)
-});
 
 app.use(cors({
     origin: process.env.CORS_ORIGIN,
@@ -56,16 +48,9 @@ app.use(express.urlencoded({
 }));
 
 // Archivos estáticos
-app.use(
-    '/api/uploads',
-    express.static(
-        path.join(__dirname, 'uploads')
-    )
-);
+app.use('/api/uploads', express.static( path.join(__dirname, 'uploads')));
 
-// Rutas públicas (Auth)
 app.use('/api/auth', authRoutes);
-app.use(authenticateToken);
 app.use('/api/exercises', exercisesRoutes);
 app.use('/api/routines', routinesRoutes);
 app.use('/api/routine-exercises', routineExercisesRoutes);

@@ -1,47 +1,59 @@
-import formidable from 'formidable';
+import formidable from "formidable";
 
-// Middleware to parse forms using the Formidable library
+const ARRAY_FIELDS = ["muscleGroups"];
+
+// Middleware to parse multipart forms using Formidable (v3)
 const parseForm = (customOptions = {}) => {
     const defaultOptions = {
-        multiples: false,
         keepExtensions: true,
-        maxFileSize: 2 * 1024 * 1024, 
-        field: "archivo", 
+        maxFileSize: 2 * 1024 * 1024, // 2MB
     };
-    const options = { ...defaultOptions, ...customOptions };
+
+    // `field` es solo para nuestros mensajes de error, no es una opción de formidable
+    const { field = "archivo", ...formidableOptions } = customOptions;
+    const options = { ...defaultOptions, ...formidableOptions };
+    const maxMB = options.maxFileSize / (1024 * 1024);
 
     return (req, res, next) => {
-        const form = new formidable.IncomingForm(options);
+        const form = formidable(options);
+
         form.parse(req, (err, fields, files) => {
             if (err) {
+                // 1009 = archivo mayor que maxFileSize
                 if (err.code === 1009 || err.code === "1009") {
                     return res.status(400).json({
                         statusCode: 400,
                         message: "Los datos proporcionados no son válidos",
                         error: {
                             fieldErrors: [{
-                                field: defaultOptions.field,
-                                message: "El archivo excede el peso máximo permitido de 10MB",
-                            }]
+                                field,
+                                message: `El archivo excede el peso máximo permitido de ${maxMB}MB`,
+                            }],
                         },
-                    })
+                    });
                 }
                 return next(err);
             }
-            // Firstvalues evita que cada "value" del field sea un "array" (comportamiento por defecto de express-validator)
+
+            // En formidable v3 cada campo llega como array.
+            // Dejamos valor único salvo en los campos que sí son listas.
             req.body = Object.fromEntries(
                 Object.entries(fields).map(([key, value]) => {
-                    // Si el campo es muscleGroups, queremos el array completo
-                    if (key === 'muscleGroups') {
+                    if (ARRAY_FIELDS.includes(key)) {
                         return [key, Array.isArray(value) ? value : [value]];
                     }
-                    
-                    // Para el resto de campos (name, type, etc.), mantenemos tu lógica de valor único
                     return [key, Array.isArray(value) ? value[0] : value];
                 })
             );
 
-            req.files = files;
+            // En v3 cada archivo también llega como array; lo aplanamos a un solo archivo
+            req.files = Object.fromEntries(
+                Object.entries(files).map(([key, value]) => [
+                    key,
+                    Array.isArray(value) ? value[0] : value,
+                ])
+            );
+
             next();
         });
     };

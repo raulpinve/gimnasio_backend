@@ -65,6 +65,7 @@ const handleErrorResponse = (err, req, res, next) => {
             break
     
         default:
+            console.log(err);
             // Handle any other type of error with default response
             errorObject = handleHTTPThrowErrors.handleDefaultErrorResponse()
             break;

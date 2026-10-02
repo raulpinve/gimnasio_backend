@@ -1,38 +1,13 @@
-import { Router } from 'express';
-import { authenticateToken, handleAuthMe, login, me, register } from '../controllers/auth.controller.js';
-import {
-    validateRegister,
-    validateLogin
-} from '../validators/auth.validators.js';
+import { Router } from "express";
+import { verifyFirebaseToken } from "../middlewares/auth.middlewares.js";
+import { syncUser } from "../controllers/auth.controller.js";
 
 const router = Router();
 
-// Signup
-router.post('/register', 
-    validateRegister,
-    register
+router.post(
+    "/sync", 
+    verifyFirebaseToken, 
+    syncUser
 );
 
-// Login
-router.post('/login', 
-    validateLogin, 
-    login
-);
-
-// About me
-router.get("/me", 
-    authenticateToken,
-    me
-)
-
-router.post('/me', 
-    authenticateToken, 
-    handleAuthMe
-); 
-
-router.post("/autheticate-token", 
-    authenticateToken,
-    me
-)
-
-export default router
+export default router;
