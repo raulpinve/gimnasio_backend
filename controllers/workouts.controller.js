@@ -1,8 +1,12 @@
-const { throwBadRequestError, throwNotFoundError, throwConflictError } = require("../errors/throwHTTPErrors");
-const { snakeToCamel } = require("../utils/utils.helper");
-const { pool } = require("../initDB");
+import {
+    throwBadRequestError,
+    throwNotFoundError,
+    throwConflictError
+} from '../errors/throwHTTPErrors.js';
+import { snakeToCamel } from '../utils/utils.helper.js';
+import { pool } from '../initDB.js';
 
-exports.createWorkout = async (req, res, next) => {
+export const createWorkout = async (req, res, next) => {
     const client = await pool.connect();
 
     try {
@@ -64,7 +68,7 @@ exports.createWorkout = async (req, res, next) => {
     }
 };
 
-exports.getWorkout = async (req, res, next) => {
+export const getWorkout = async (req, res, next) => {
     try {
         const { workoutId } = req.params;
 
@@ -113,7 +117,7 @@ exports.getWorkout = async (req, res, next) => {
     }
 };
 
-exports.getWorkoutActive = async(req, res, next) => {
+export const getWorkoutActive = async(req, res, next) => {
     try {
         const {id: userId} = req.user;
         if(!userId){
@@ -133,7 +137,7 @@ exports.getWorkoutActive = async(req, res, next) => {
     }
 } 
 
-exports.getAllWorkouts = async (req, res, next) => {
+export const getAllWorkouts = async (req, res, next) => {
     try {
         const { id: userId } = req.user;
 
@@ -231,7 +235,7 @@ exports.getAllWorkouts = async (req, res, next) => {
     }
 };
 
-exports.finishWorkout = async (req, res, next) => {
+export const finishWorkout = async (req, res, next) => {
     const { workoutId } = req.params;
     const client = await pool.connect();
 
@@ -291,7 +295,7 @@ exports.finishWorkout = async (req, res, next) => {
     }
 };
 
-exports.deleteWorkout = async (req, res, next) => {
+export const deleteWorkout = async (req, res, next) => {
     try {
         const { workoutId } = req.params;
         const userId = req.user.id;

@@ -1,13 +1,16 @@
-const { throwUnauthorizedError, throwNotFoundError } = require("../errors/throwHTTPErrors");
-const { pool } = require("../initDB");
-const { generarTokenAutenticacion, generateAccessToken, compareHashedPassword } = require("../utils/hash.helper");
-const crypto = require("crypto");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
-const { snakeToCamel } = require("../utils/utils.helper");
-const admin = require('firebase-admin');
-const { getAuth } = require('firebase-admin/auth');
-exports.authenticateToken = async (req, res, next) => {
+import {
+    throwUnauthorizedError,
+} from '../errors/throwHTTPErrors.js';
+import { pool } from '../initDB.js';
+import {
+    generateAccessToken,
+    compareHashedPassword
+} from '../utils/hash.helper.js';
+import bcrypt from 'bcrypt';
+import { snakeToCamel } from '../utils/utils.helper.js';
+import { getAuth } from 'firebase-admin/auth';
+
+export const authenticateToken = async (req, res, next) => {
     try {
         const authHeader = req.headers["authorization"];
 
@@ -54,7 +57,7 @@ exports.authenticateToken = async (req, res, next) => {
     }
 };
 
-exports.handleAuthMe = async (req, res, next) => {
+export const handleAuthMe = async (req, res, next) => {
     try {
         const { firebaseUid, email, isNewUser } = req.user;
         let userId = req.user.id;
@@ -87,9 +90,7 @@ exports.handleAuthMe = async (req, res, next) => {
     }
 };
 
-
-
-exports.register = async (req, res, next) => {
+export const register = async (req, res, next) => {
     try {
         const { firstName, lastName, username, email, password } = req.body;
 
@@ -150,7 +151,7 @@ exports.register = async (req, res, next) => {
     }
 };
 
-exports.login = async (req, res, next) => {
+export const login = async (req, res, next) => {
     try {
         const { username, password } = req.body;
         
@@ -195,7 +196,7 @@ exports.login = async (req, res, next) => {
     }
 };
 
-exports.me = async (req, res, next) => {
+export const me = async (req, res, next) => {
     try {
         const { firebaseUid } = req.user;
 
@@ -241,7 +242,7 @@ exports.me = async (req, res, next) => {
     }
 };
 
-exports.createMe = async (req, res, next) => {
+export const createMe = async (req, res, next) => {
     try {
         const { firstName, lastName, username } = req.body;
         const { firebaseUid, email } = req.user;

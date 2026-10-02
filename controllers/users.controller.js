@@ -1,8 +1,8 @@
-const { throwBadRequestError } = require("../errors/throwHTTPErrors");
-const { pool } = require("../initDB");
-const { snakeToCamel } = require("../utils/utils.helper");
+import { throwBadRequestError } from '../errors/throwHTTPErrors.js';
+import { pool } from '../initDB.js';
+import { snakeToCamel } from '../utils/utils.helper.js';
 
-exports.getUserStats = async (req, res, next) => {
+export const getUserStats = async (req, res, next) => {
     try {
         const userId = req.user.id; 
 
@@ -57,7 +57,7 @@ exports.getUserStats = async (req, res, next) => {
     }
 };
 
-exports.updateProfile = async (req, res, next) => {
+export const updateProfile = async (req, res, next) => {
     try {
         const userId = req.user.firebaseUid;
         const { firstName, lastName } = req.body;

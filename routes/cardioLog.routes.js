@@ -1,17 +1,20 @@
-const router = require("express").Router();
-const cardioLogsController = require("../controllers/cardioLog.controller");
-const { validateWorkoutExerciseId } = require("../validators/workoutExercise.validator");
-const validateExerciseType = require("../validators/validateExerciseType.validator");
-
-const {
+import express from 'express';
+import {
+    createCardioLog, getAllCardioLogs, updateCardioLog, deleteCardioLog,
+    getCardioLog
+} from '../controllers/cardioLog.controller.js';
+import {
+    validateWorkoutExerciseId
+} from '../validators/workoutExercise.validator.js';
+import validateExerciseType from '../validators/validateExerciseType.validator.js';
+import {
     validateCardioLogId,
     validateCreateCardioLog,
-    validateUpdateCardioLog,
-} = require("../validators/cardioLogs.validator");
+    validateUpdateCardioLog
+} from '../validators/cardioLogs.validator.js';
+import checkWorkoutNotClosed from '../middlewares/checkWorkoutNotClosed.middleware.js';
 
-const checkWorkoutNotClosed = require("../middlewares/checkWorkoutNotClosed.middleware");
-const { validateWorkoutId } = require("../validators/workouts.validator");
-const { validateExerciseId } = require("../validators/exercises.validator");
+const router = express.Router();
 
 // Crear registro de cardio
 router.post(
@@ -20,21 +23,21 @@ router.post(
     checkWorkoutNotClosed,
     validateExerciseType("cardio"),
     validateCreateCardioLog,
-    cardioLogsController.createCardioLog
+    createCardioLog
 );
 
 // Obtener registro de cardio por ID
 router.get(
     "/:cardioLogId",
     validateCardioLogId,
-    cardioLogsController.getCardioLog
+    getCardioLog
 );
 
 // Obtener todos los logs de cardio
 router.get(
     "/",
     validateWorkoutExerciseId, 
-    cardioLogsController.getAllCardioLogs
+    getAllCardioLogs
 );
 
 // Actualizar registro de cardio
@@ -43,7 +46,7 @@ router.patch(
     validateCardioLogId,
     checkWorkoutNotClosed,
     validateUpdateCardioLog,
-    cardioLogsController.updateCardioLog
+    updateCardioLog
 );
 
 // Eliminar registro de cardio
@@ -51,7 +54,7 @@ router.delete(
     "/:cardioLogId",
     validateCardioLogId,
     checkWorkoutNotClosed,
-    cardioLogsController.deleteCardioLog
+    deleteCardioLog
 );
 
-module.exports = router;
+export default router;

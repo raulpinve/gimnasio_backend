@@ -1,29 +1,30 @@
-const router = require("express").Router();
-const routinesController = require("../controllers/routines.controller");
+import { Router } from 'express';
+import { createRoutine, deleteRoutine, getAllRoutines, getRoutine, updateRoutine } from '../controllers/routines.controller.js';
+const router = Router();
 
-const {
+import {
     validateRoutineId,
     validateCreateRoutine,
     validateUpdateRoutine,
     validateGetAllRoutines
-} = require("../validators/routines.validator");
+} from '../validators/routines.validator.js';
 
 router.post(
     "/",
     validateCreateRoutine,
-    routinesController.createRoutine
+    createRoutine
 );
 
 router.get(
     "/:routineId",
     validateRoutineId,
-    routinesController.getRoutine
+    getRoutine
 );
 
 router.get(
     "/",
     validateGetAllRoutines,
-    routinesController.getAllRoutines
+    getAllRoutines
 );
 
 
@@ -31,13 +32,13 @@ router.patch(
     "/:routineId",
     validateRoutineId,
     validateUpdateRoutine,
-    routinesController.updateRoutine
+    updateRoutine
 );
 
 router.delete(
     "/:routineId",
     validateRoutineId,
-    routinesController.deleteRoutine
+    deleteRoutine
 );
 
-module.exports = router;
+export default router;

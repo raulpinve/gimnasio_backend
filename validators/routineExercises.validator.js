@@ -1,10 +1,13 @@
-const { body } = require("express-validator");
-const { throwNotFoundError, throwConflictError, throwBadRequestError } = require("../errors/throwHTTPErrors");
-const handleValidationErrors = require("./handleValidationErrors");
-const { pool } = require("../initDB");
-const { validateUUID } = require("./validator");
+import { body } from 'express-validator';
+import {
+    throwNotFoundError,
+    throwBadRequestError
+} from '../errors/throwHTTPErrors.js';
+import handleValidationErrors from './handleValidationErrors.js';
+import { pool } from '../initDB.js';
+import { validateUUID } from './validator.js';
 
-exports.validateRoutineExerciseId = async (req, res, next) => {
+export const validateRoutineExerciseId = async (req, res, next) => {
     try {
         const routineExerciseId = req.params.routineExerciseId;
         if (!validateUUID(routineExerciseId)) {
@@ -31,7 +34,7 @@ exports.validateRoutineExerciseId = async (req, res, next) => {
     }
 };
 
-exports.validateCreateRoutineExercise = [
+export const validateCreateRoutineExercise = [
     body(["targetSets", "targetReps"])
         .if((value, { req }) => req.exercise.type === "strength")
         .notEmpty().withMessage("Este campo es obligatorio para ejercicios de fuerza.")
@@ -72,7 +75,7 @@ exports.validateCreateRoutineExercise = [
     handleValidationErrors
 ];
 
-exports.validateUpdateRoutineExercise = [
+export const validateUpdateRoutineExercise = [
     body("targetSets")
         .if((value, { req }) => req.exercise.type === "strength")
         .optional()
@@ -115,7 +118,7 @@ exports.validateUpdateRoutineExercise = [
     handleValidationErrors
 ];
 
-exports.validateIfExerciseWasCreatedOnRoutine = async (req, res, next) => {
+export const validateIfExerciseWasCreatedOnRoutine = async (req, res, next) => {
     try {
         const { routineId, exerciseId } = req.body;
 

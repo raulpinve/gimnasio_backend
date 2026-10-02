@@ -1,16 +1,17 @@
-const router = require("express").Router();
-const { validateWorkoutExerciseId } = require("../validators/workoutExercise.validator");
-const validateExerciseType = require("../validators/validateExerciseType.validator");
-const workoutSetsController = require("../controllers/workoutSets.controller");
-const checkWorkoutNotClosed = require("../middlewares/checkWorkoutNotClosed.middleware");
-const { validateExerciseId } = require("../validators/exercises.validator");
-const { validateWorkoutId } = require("../validators/workouts.validator");
+import { Router } from 'express';
+import {
+    validateWorkoutExerciseId
+} from '../validators/workoutExercise.validator.js';
+import validateExerciseType from '../validators/validateExerciseType.validator.js';
+import { createWorkoutSet, deleteWorkoutSet, getAllWorkoutSets, getWorkoutSet, updateWorkoutSet } from '../controllers/workoutSets.controller.js';
+import checkWorkoutNotClosed from '../middlewares/checkWorkoutNotClosed.middleware.js';
+const router = Router();
 
-const {
+import {
     validateWorkoutSetId,
     validateCreateWorkoutSet,
-    validateUpdateWorkoutSet,
-} = require("../validators/workoutSets.validator");
+    validateUpdateWorkoutSet
+} from '../validators/workoutSets.validator.js';
 
 // Create workout set
 router.post(
@@ -19,21 +20,21 @@ router.post(
     checkWorkoutNotClosed,
     validateExerciseType("strength"),
     validateCreateWorkoutSet,
-    workoutSetsController.createWorkoutSet
+    createWorkoutSet
 );
 
 // Get workout set by ID
 router.get(
     "/:workoutSetId",
     validateWorkoutSetId,
-    workoutSetsController.getWorkoutSet
+    getWorkoutSet
 );
 
 // Get all workout sets
 router.get(
     "/",
     validateWorkoutExerciseId, 
-    workoutSetsController.getAllWorkoutSets
+    getAllWorkoutSets
 );
 
 // Update workout set
@@ -42,7 +43,7 @@ router.patch(
     validateWorkoutSetId,
     checkWorkoutNotClosed,
     validateUpdateWorkoutSet,
-    workoutSetsController.updateWorkoutSet,
+    updateWorkoutSet,
 );
 
 // Delete workout set
@@ -50,7 +51,7 @@ router.delete(
     "/:workoutSetId",
     validateWorkoutSetId,
     checkWorkoutNotClosed,
-    workoutSetsController.deleteWorkoutSet
+    deleteWorkoutSet
 );
 
-module.exports = router;
+export default router;

@@ -1,7 +1,6 @@
-const { body } = require("express-validator");
-const { pool } = require("../initDB");
-const handleValidationErrors = require("./handleValidationErrors");
-
+import { body } from 'express-validator';
+import { pool } from '../initDB.js';
+import handleValidationErrors from './handleValidationErrors.js';
 
 const validatePassword = () => [
     body("password")
@@ -78,7 +77,8 @@ const validateLastName = () => [
         .withMessage("El apellido debe tener entre 2 y 50 caracteres.")
         .trim()
 ];
-exports.validateUpdateProfile = [
+
+export const validateUpdateProfile = [
     ...validateFirstName(),
     ...validateLastName(),
     handleValidationErrors

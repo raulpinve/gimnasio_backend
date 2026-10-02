@@ -1,10 +1,10 @@
-const { body } = require("express-validator");
-const { throwNotFoundError } = require("../errors/throwHTTPErrors");
-const handleValidationErrors = require("./handleValidationErrors");
-const { pool } = require("../initDB");
-const { validateUUID } = require("./validator");
+import { body } from 'express-validator';
+import { throwNotFoundError } from '../errors/throwHTTPErrors.js';
+import handleValidationErrors from './handleValidationErrors.js';
+import { pool } from '../initDB.js';
+import { validateUUID } from './validator.js';
 
-exports.validateCardioLogId = async (req, res, next) => {
+export const validateCardioLogId = async (req, res, next) => {
     try {
         const { cardioLogId } = req.params;
         if (!validateUUID(cardioLogId)) {
@@ -28,14 +28,13 @@ exports.validateCardioLogId = async (req, res, next) => {
         req.workout = {
             finishedAt: rows[0].finished_at
         }
-
         next();
     } catch (error) {
         next(error);
     }
 };
 
-exports.validateCreateCardioLog = [
+export const validateCreateCardioLog = [
     body("durationSeconds")
         .notEmpty().withMessage("El campo es requerido.")
         .isInt({ min: 1 })
@@ -55,11 +54,10 @@ exports.validateCreateCardioLog = [
         .optional({ nullable: true })
         .isInt({ min: 30, max: 250 })
         .withMessage("El ritmo cardíaco debe estar en un rango válido (30-250)."),
-
     handleValidationErrors
 ];
 
-exports.validateUpdateCardioLog = [
+export const validateUpdateCardioLog = [
     body("durationSeconds")
         .optional()
         .isInt({ min: 1 })
@@ -79,6 +77,5 @@ exports.validateUpdateCardioLog = [
         .optional({ nullable: true })
         .isInt({ min: 30, max: 250 })
         .withMessage("El ritmo cardíaco debe estar en un rango válido."),
-
     handleValidationErrors
 ];

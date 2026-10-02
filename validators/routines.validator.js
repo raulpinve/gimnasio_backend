@@ -1,10 +1,10 @@
-const { body, query } = require("express-validator");
-const { throwNotFoundError } = require("../errors/throwHTTPErrors");
-const handleValidationErrors = require("./handleValidationErrors");
-const { pool } = require("../initDB");
-const { validateUUID } = require("./validator");
+import { body, query } from 'express-validator';
+import { throwNotFoundError } from '../errors/throwHTTPErrors.js';
+import handleValidationErrors from './handleValidationErrors.js';
+import { pool } from '../initDB.js';
+import { validateUUID } from './validator.js';
 
-exports.validateRoutineId = async (req, res, next) => {
+export const validateRoutineId = async (req, res, next) => {
     try {
         const routineId = req?.params?.routineId || req?.body?.routineId || req?.query?.routineId;
         if (!validateUUID(routineId)) {
@@ -27,7 +27,7 @@ exports.validateRoutineId = async (req, res, next) => {
     }
 };
 
-exports.validateCreateRoutine = [
+export const validateCreateRoutine = [
     body("name")
         .notEmpty().withMessage("El nombre es requerido.")
         .isLength({ min: 2, max: 100 })
@@ -49,7 +49,7 @@ exports.validateCreateRoutine = [
     handleValidationErrors
 ];
 
-exports.validateUpdateRoutine = [
+export const validateUpdateRoutine = [
     body("name")
         .optional()
         .isLength({ min: 2, max: 100 })
@@ -75,7 +75,7 @@ exports.validateUpdateRoutine = [
     handleValidationErrors
 ];
 
-exports.validateGetAllRoutines = [
+export const validateGetAllRoutines = [
     query("page")
         .optional()
         .isInt({ min: 1 })

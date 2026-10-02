@@ -1,8 +1,11 @@
-const { throwBadRequestError, throwNotFoundError } = require("../errors/throwHTTPErrors");
-const { pool } = require("../initDB");
-const { snakeToCamel } = require("../utils/utils.helper");
+import {
+    throwBadRequestError,
+    throwNotFoundError
+} from '../errors/throwHTTPErrors.js';
+import { pool } from '../initDB.js';
+import { snakeToCamel } from '../utils/utils.helper.js';
 
-exports.createRoutine = async (req, res, next) => {
+export const createRoutine = async (req, res, next) => {
     try {
         const { name } = req.body;
         const { id: userId } = req.user || {};
@@ -36,7 +39,7 @@ exports.createRoutine = async (req, res, next) => {
     }
 };
 
-exports.getRoutine = async (req, res, next) => {
+export const getRoutine = async (req, res, next) => {
     try {
         const { routineId } = req.params;
 
@@ -75,8 +78,7 @@ exports.getRoutine = async (req, res, next) => {
     }
 };
 
-
-exports.getAllRoutines = async (req, res, next) => {
+export const getAllRoutines = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
@@ -121,8 +123,7 @@ exports.getAllRoutines = async (req, res, next) => {
     }
 };
 
-
-exports.updateRoutine = async (req, res, next) => {
+export const updateRoutine = async (req, res, next) => {
     try {
         const { routineId } = req.params;
         const { name } = req.body || {};
@@ -155,7 +156,7 @@ exports.updateRoutine = async (req, res, next) => {
     }
 };
 
-exports.deleteRoutine = async (req, res, next) => {
+export const deleteRoutine = async (req, res, next) => {
     try {
         const { routineId } = req.params;
         const { rowCount } = await pool.query(

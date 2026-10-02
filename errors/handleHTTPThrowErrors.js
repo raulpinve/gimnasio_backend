@@ -96,4 +96,4 @@ const handleHttpThrowErrors = {
     } 
 }
 
-module.exports = handleHttpThrowErrors
+export default handleHttpThrowErrors

@@ -1,8 +1,12 @@
-const { throwBadRequestError, throwNotFoundError, throwConflictError } = require("../errors/throwHTTPErrors");
-const { pool } = require("../initDB");
-const { snakeToCamel } = require("../utils/utils.helper");
+import {
+    throwBadRequestError,
+    throwNotFoundError,
+    throwConflictError
+} from '../errors/throwHTTPErrors.js';
+import { pool } from '../initDB.js';
+import { snakeToCamel } from '../utils/utils.helper.js';
 
-exports.createWorkoutExercise = async (req, res, next) => {
+export const createWorkoutExercise = async (req, res, next) => {
     try {
         const { workoutId, exerciseId } = req.body;
         const { rows } = await pool.query(
@@ -32,7 +36,7 @@ exports.createWorkoutExercise = async (req, res, next) => {
     }
 };
 
-exports.getWorkoutExercise = async (req, res, next) => {
+export const getWorkoutExercise = async (req, res, next) => {
     try {
         const { workoutExerciseId } = req.params;
 
@@ -141,7 +145,7 @@ exports.getWorkoutExercise = async (req, res, next) => {
     }
 };
 
-exports.getWorkoutExercises = async (req, res, next) => {
+export const getWorkoutExercises = async (req, res, next) => {
     try {
         const { workoutId } = req.query;
         if (!workoutId) {
@@ -205,7 +209,7 @@ exports.getWorkoutExercises = async (req, res, next) => {
     }
 };
 
-exports.getWorkoutActiveExercises = async (req, res, next) => {
+export const getWorkoutActiveExercises = async (req, res, next) => {
     try {
         const { workoutId } = req.query;
 
@@ -337,7 +341,7 @@ exports.getWorkoutActiveExercises = async (req, res, next) => {
     }
 };
 
-exports.deleteWorkoutExercise = async (req, res, next) => {
+export const deleteWorkoutExercise = async (req, res, next) => {
     try {
         const { workoutExerciseId } = req.params;
 

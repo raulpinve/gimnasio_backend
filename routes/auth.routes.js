@@ -1,33 +1,38 @@
-const router = require('express').Router();
-const authController = require('../controllers/auth.controller');
-const { validateRegister, validateLogin } = require('../validators/auth.validators');
+import { Router } from 'express';
+import { authenticateToken, handleAuthMe, login, me, register } from '../controllers/auth.controller.js';
+import {
+    validateRegister,
+    validateLogin
+} from '../validators/auth.validators.js';
+
+const router = Router();
 
 // Signup
 router.post('/register', 
     validateRegister,
-    authController.register
+    register
 );
 
 // Login
 router.post('/login', 
     validateLogin, 
-    authController.login
+    login
 );
 
 // About me
 router.get("/me", 
-    authController.authenticateToken,
-    authController.me
+    authenticateToken,
+    me
 )
 
 router.post('/me', 
-    authController.authenticateToken, 
-    authController.handleAuthMe
+    authenticateToken, 
+    handleAuthMe
 ); 
 
 router.post("/autheticate-token", 
-    authController.authenticateToken,
-    authController.me
+    authenticateToken,
+    me
 )
 
-module.exports = router
+export default router

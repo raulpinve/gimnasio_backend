@@ -1,13 +1,21 @@
-const { throwBadRequestError } = require("../errors/throwHTTPErrors");
-const { pool } = require("../initDB");
-const { snakeToCamel } = require("../utils/utils.helper");
-const path = require('path');
-const sharp = require('sharp');
-const { crearCarpeta, validateSizeFile, validateMimeTypeFile, subirArchivo, eliminarArchivo } = require("../utils/files");
-const fs = require('fs').promises;
+import { throwBadRequestError } from '../errors/throwHTTPErrors.js';
+import { pool } from '../initDB.js';
+import { snakeToCamel } from '../utils/utils.helper.js';
+import path from 'path';
+import sharp from 'sharp';
+import {
+    crearCarpeta,
+    validateSizeFile,
+    validateMimeTypeFile,
+    subirArchivo,
+    eliminarArchivo
+} from '../utils/files.js';
+
+import fs from 'fs/promises';
+
 sharp.cache(false);
 
-exports.createExercise = async (req, res, next) => {
+export const createExercise = async (req, res, next) => {
     const imageFile = req.files["image"]?.[0];
     const videoFile = req.files["video"]?.[0];
 
@@ -174,7 +182,7 @@ exports.createExercise = async (req, res, next) => {
     }
 };
 
-exports.getExercise = async (req, res, next) => {
+export const getExercise = async (req, res, next) => {
     try {
         const { exerciseId } = req.params;
 
@@ -222,7 +230,7 @@ exports.getExercise = async (req, res, next) => {
         next(error);
     }
 };
-exports.getAllExercises = async (req, res, next) => {
+export const getAllExercises = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
@@ -324,7 +332,7 @@ exports.getAllExercises = async (req, res, next) => {
 
 
 
-exports.updateExercise = async (req, res, next) => {
+export const updateExercise = async (req, res, next) => {
     try {
         const { exerciseId } = req.params;
         
@@ -426,7 +434,7 @@ exports.updateExercise = async (req, res, next) => {
     }
 };
 
-exports.deleteExercise = async (req, res, next) => {
+export const deleteExercise = async (req, res, next) => {
     try {
         const { exerciseId } = req.params;
 
@@ -465,7 +473,7 @@ exports.deleteExercise = async (req, res, next) => {
     }
 };
 
-exports.getExerciseProgress = async (req, res, next) => {
+export const getExerciseProgress = async (req, res, next) => {
     try {
         const { exerciseId } = req.params;
         const userId = req.user.id;

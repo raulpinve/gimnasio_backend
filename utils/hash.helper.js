@@ -1,16 +1,16 @@
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
+import bcrypt from 'bcrypt';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 
-exports.hashPassword = (password) => {
+export const hashPassword = (password) => {
     return bcrypt.hashSync(password, 10);
 }
 
-exports.compareHashedPassword = (password, hashedPassword) => {
+export const compareHashedPassword = (password, hashedPassword) => {
     return bcrypt.compareSync(password, hashedPassword)
 }
 
-exports.generateAccessToken = (user) => {
+export const generateAccessToken = (user) => {
 	return jwt.sign(
 		{ id: user.id },
 		process.env.ACCESS_TOKEN_SECRET,
@@ -18,7 +18,7 @@ exports.generateAccessToken = (user) => {
 	);
 }
 
-exports.generateRefreshToken = (user) =>{
+export const generateRefreshToken = (user) =>{
 	return jwt.sign(
 		{ id: user.id },
 		process.env.REFRESH_TOKEN_SECRET,
@@ -26,7 +26,7 @@ exports.generateRefreshToken = (user) =>{
 	);
 }
 
-exports.generateImageToken = (entityType, id, thumbnail = false) => {
+export const generateImageToken = (entityType, id, thumbnail = false) => {
 	if (!validTypes.includes(entityType)) {
         throw new Error(`Invalid entity type: ${entityType}`);
     }
@@ -35,6 +35,6 @@ exports.generateImageToken = (entityType, id, thumbnail = false) => {
     return `${process.env.BACKEND_URL}/images/${entityType}/${id}/avatar${thumbnail ? "/thumbnail" : ""}?token=${token}`;
 }
 
-exports.generatePasswordResetToken = () => {
-    return crypto.randomBytes(20).toString("hex"); // Generates a random 40-character token
+export const generatePasswordResetToken = () => {
+    return crypto.randomBytes(20).toString("hex"); 
 };

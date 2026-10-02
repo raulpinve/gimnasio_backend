@@ -1,8 +1,8 @@
-const { throwNotFoundError, throwGoneError, throwBadRequestError } = require("../errors/throwHTTPErrors");
-const { pool } = require("../initDB");
-const { snakeToCamel } = require("../utils/utils.helper");
+import { throwNotFoundError } from '../errors/throwHTTPErrors.js';
+import { pool } from '../initDB.js';
+import { snakeToCamel } from '../utils/utils.helper.js';
 
-exports.createCardioLog = async (req, res, next) => {
+export const createCardioLog = async (req, res, next) => {
     const client = await pool.connect();
     try {
         const {
@@ -48,7 +48,7 @@ exports.createCardioLog = async (req, res, next) => {
 };
 
 
-exports.getCardioLog = async (req, res, next) => {
+export const getCardioLog = async (req, res, next) => {
     try {
         const { cardioLogId } = req.params;
 
@@ -71,7 +71,7 @@ exports.getCardioLog = async (req, res, next) => {
     }
 };
 
-exports.getAllCardioLogs = async (req, res, next) => {
+export const getAllCardioLogs = async (req, res, next) => {
     try {
         const { workoutExerciseId } = req.query;
 
@@ -97,7 +97,7 @@ exports.getAllCardioLogs = async (req, res, next) => {
 };
 
 
-exports.updateCardioLog = async (req, res, next) => {
+export const updateCardioLog = async (req, res, next) => {
     try {
         const { cardioLogId } = req.params;
         const { durationSeconds, distanceKm, calories, avgHeartRate } = req.body || {};
@@ -129,7 +129,7 @@ exports.updateCardioLog = async (req, res, next) => {
     }
 };
 
-exports.deleteCardioLog = async (req, res, next) => {
+export const deleteCardioLog = async (req, res, next) => {
     const client = await pool.connect();
     try {
         const { cardioLogId } = req.params;

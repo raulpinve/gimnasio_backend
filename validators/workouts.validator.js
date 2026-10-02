@@ -1,10 +1,13 @@
-const { body, query } = require("express-validator");
-const { throwNotFoundError, throwConflictError, throwBadRequestError } = require("../errors/throwHTTPErrors");
-const handleValidationErrors = require("./handleValidationErrors");
-const { pool } = require("../initDB");
-const { validateUUID } = require("./validator");
+import { body, query } from 'express-validator';
+import {
+    throwNotFoundError,
+    throwBadRequestError
+} from '../errors/throwHTTPErrors.js';
+import handleValidationErrors from './handleValidationErrors.js';
+import { pool } from '../initDB.js';
+import { validateUUID } from './validator.js';
 
-exports.validateWorkoutId = async (req, res, next) => {
+export const validateWorkoutId = async (req, res, next) => {
     try {
         const workoutId =  req?.body?.workoutId || req?.params?.workoutId || req?.query?.workoutId;
 
@@ -28,7 +31,7 @@ exports.validateWorkoutId = async (req, res, next) => {
     }
 };
 
-exports.validateRoutineIdCampoOptional = async (req, res, next) => {
+export const validateRoutineIdCampoOptional = async (req, res, next) => {
     try {
         const { routineId } = req.body;
 
@@ -55,7 +58,7 @@ exports.validateRoutineIdCampoOptional = async (req, res, next) => {
     }
 };
 
-exports.validateCreateWorkout = [
+export const validateCreateWorkout = [
     body("routineId")
         .optional()
         .custom(async(value) => {

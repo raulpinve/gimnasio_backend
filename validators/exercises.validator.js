@@ -1,10 +1,10 @@
-const { body, query } = require("express-validator");
-const { throwNotFoundError } = require("../errors/throwHTTPErrors");
-const handleValidationErrors = require("./handleValidationErrors");
-const { pool } = require("../initDB");
-const { validateUUID } = require("./validator");
+import { body, query } from 'express-validator';
+import { throwNotFoundError } from '../errors/throwHTTPErrors.js';
+import handleValidationErrors from './handleValidationErrors.js';
+import { pool } from '../initDB.js';
+import { validateUUID } from './validator.js';
 
-exports.validateExerciseId = async (req, res, next) => {
+export const validateExerciseId = async (req, res, next) => {
     try {
         const exerciseId =
             req.params?.exerciseId ||
@@ -30,7 +30,7 @@ exports.validateExerciseId = async (req, res, next) => {
     }
 };
 
-exports.validateCreateExercise = [
+export const validateCreateExercise = [
     body("name")
         .notEmpty().withMessage("El nombre es requerido.")
         .isLength({ min: 2, max: 100 })
@@ -84,7 +84,7 @@ exports.validateCreateExercise = [
     handleValidationErrors
 ];
 
-exports.validateUpdateExercise = [
+export const validateUpdateExercise = [
     body("name")
         .optional()
         .isLength({ min: 2, max: 100 })
@@ -146,7 +146,7 @@ exports.validateUpdateExercise = [
     handleValidationErrors
 ];
 
-exports.validateGetAllExercises = [
+export const validateGetAllExercises = [
     query("page")
         .optional()
         .isInt({ min: 1 })

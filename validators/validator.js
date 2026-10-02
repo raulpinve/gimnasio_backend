@@ -1,4 +1,4 @@
-exports.validateUUID = (value) => {
+export const validateUUID = (value) => {
     if (!value || typeof value !== "string") {
         return false;
     }

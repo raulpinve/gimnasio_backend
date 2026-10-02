@@ -1,5 +1,4 @@
-// Import functions to handle specific errors
-const handleHTTPThrowErrors = require('./handleHTTPThrowErrors')
+import handleHTTPThrowErrors from './handleHTTPThrowErrors.js';
 
 // Main function to handle error responses of the application
 const handleErrorResponse = (err, req, res, next) => {  
@@ -75,4 +74,4 @@ const handleErrorResponse = (err, req, res, next) => {
 }
 
 // Export the error response handling function
-module.exports = handleErrorResponse
+export default handleErrorResponse

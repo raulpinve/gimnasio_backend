@@ -1,11 +1,11 @@
-const fs = require("fs/promises");
-const path = require("path");
+import fs from 'fs/promises';
+import path from 'path';
 
-exports.crearCarpeta = async (uploadDir) => {
+export const crearCarpeta = async (uploadDir) => {
     await fs.mkdir(uploadDir, { recursive: true });
 };
 
-exports.subirArchivo = (fileTempPath, uploadDir) => {
+export const subirArchivo = (fileTempPath, uploadDir) => {
     return new Promise((resolve, reject) => {
         require("fs").rename(fileTempPath, uploadDir, (err) => {
             if (err) {
@@ -16,15 +16,15 @@ exports.subirArchivo = (fileTempPath, uploadDir) => {
     });
 };
 
-exports.validateSizeFile = (file, maxSize) => {
+export const validateSizeFile = (file, maxSize) => {
     return file.size < maxSize * 1024 * 1024
 }
 
-exports.validateMimeTypeFile = (array, file) => {
+export const validateMimeTypeFile = (array, file) => {
     return array.includes(file.mimetype)
 }
 
-exports.eliminarArchivo = async (filePath) => {
+export const eliminarArchivo = async (filePath) => {
     // Nada que eliminar
     if (!filePath || typeof filePath !== "string") {
         return true;

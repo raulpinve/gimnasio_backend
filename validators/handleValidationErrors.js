@@ -1,5 +1,5 @@
-const { throwBadRequestErrorWithMultipleErrors } = require("../errors/throwHTTPErrors")
-const { validationResult } = require("express-validator")
+import { throwBadRequestErrorWithMultipleErrors } from '../errors/throwHTTPErrors.js';
+import { validationResult } from 'express-validator';
 
 const handleValidationErrors  = (req, res, next) => {
     const errors = validationResult(req);
@@ -9,4 +9,4 @@ const handleValidationErrors  = (req, res, next) => {
     next();
 };
 
-module.exports = handleValidationErrors 
+export default handleValidationErrors 

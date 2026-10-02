@@ -1,15 +1,17 @@
-const router = require("express").Router();
-const usersControllers = require("../controllers/users.controller");
-const { validateUpdateProfile } = require("../validators/user.validators");
+import { Router } from 'express';
+import { getUserStats, updateProfile } from '../controllers/users.controller.js';
+import { validateUpdateProfile } from '../validators/user.validators.js';
+
+const router = Router();
 
 router.get(
     "/stats",
-    usersControllers.getUserStats
+    getUserStats
 );
 
 router.put("/", 
     validateUpdateProfile,
-    usersControllers.updateProfile
+    updateProfile
 )
 
-module.exports = router;
+export default router;

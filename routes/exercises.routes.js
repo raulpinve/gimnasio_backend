@@ -1,37 +1,46 @@
-const router = require("express").Router();
-const exercisesController = require("../controllers/exercises.controller");
-const parseForm = require("../middlewares/parseForm.middleware.js");
+import { Router } from 'express';
+import {
+    createExercise, 
+    deleteExercise, 
+    getAllExercises, 
+    getExercise, 
+    getExerciseProgress, 
+    updateExercise
+} from '../controllers/exercises.controller.js';
+import parseForm from '../middlewares/parseForm.middleware.js';
 
-const {
+const router = Router();
+
+import {
     validateExerciseId,
     validateCreateExercise,
     validateUpdateExercise
-} = require("../validators/exercises.validator");
+} from '../validators/exercises.validator.js';
 
 // Create
 router.post(
     "/",
     parseForm(), 
     validateCreateExercise,
-    exercisesController.createExercise
+    createExercise
 );
 
 // Get all
 router.get(
     "/",
-    exercisesController.getAllExercises
+    getAllExercises
 );
 
 router.get("/:exerciseId/progress", 
     validateExerciseId,
-    exercisesController.getExerciseProgress
+    getExerciseProgress
 )
 
 // Get one
 router.get(
     "/:exerciseId",
     validateExerciseId,
-    exercisesController.getExercise
+    getExercise
 );
 
 // Update
@@ -40,14 +49,14 @@ router.patch(
     parseForm(), 
     validateExerciseId,
     validateUpdateExercise,
-    exercisesController.updateExercise
+    updateExercise
 );
 
 // Delete
 router.delete(
     "/:exerciseId",
     validateExerciseId,
-    exercisesController.deleteExercise
+    deleteExercise
 );
 
-module.exports = router;
+export default router;

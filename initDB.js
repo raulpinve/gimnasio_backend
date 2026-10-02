@@ -1,4 +1,4 @@
-const { Pool } = require("pg");
+import { Pool } from 'pg';
 
 const pool = new Pool({
     user: process.env.DB_USER,
@@ -11,12 +11,18 @@ const pool = new Pool({
 async function initDB() {
     try {
         const client = await pool.connect();
+
         // console.log("🎉 Base de datos inicializada correctamente");
-        client.release(); // 🔥 Importante liberar conexión
+
+        client.release();
     } catch (error) {
-        console.error("❌ Error al inicializar la base de datos:", error);
+        console.error(
+            '❌ Error al inicializar la base de datos:',
+            error
+        );
+
         process.exit(1);
     }
 }
 
-module.exports = { initDB, pool };
+export { initDB, pool };

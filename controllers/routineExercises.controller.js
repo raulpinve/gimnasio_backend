@@ -1,8 +1,11 @@
-const { throwBadRequestError, throwNotFoundError } = require("../errors/throwHTTPErrors");
-const { pool } = require("../initDB");
-const { snakeToCamel } = require("../utils/utils.helper");
+import {
+    throwBadRequestError,
+    throwNotFoundError
+} from '../errors/throwHTTPErrors.js';
+import { pool } from '../initDB.js';
+import { snakeToCamel } from '../utils/utils.helper.js';
 
-exports.createRoutineExercise = async (req, res, next) => {
+export const createRoutineExercise = async (req, res, next) => {
     try {
         const {
             routineId,
@@ -58,7 +61,7 @@ exports.createRoutineExercise = async (req, res, next) => {
 };
 
 
-exports.getRoutineExercise = async (req, res, next) => {
+export const getRoutineExercise = async (req, res, next) => {
     try {
         const { routineExerciseId } = req.params;
         const { rows } = await pool.query(
@@ -83,7 +86,7 @@ exports.getRoutineExercise = async (req, res, next) => {
     }
 };
 
-exports.getRoutineExercises = async (req, res, next) => {
+export const getRoutineExercises = async (req, res, next) => {
     try {
         const { routineId } = req.params;
         if (!routineId) {
@@ -108,7 +111,7 @@ exports.getRoutineExercises = async (req, res, next) => {
     }
 };
 
-exports.updateRoutineExercise = async (req, res, next) => {
+export const updateRoutineExercise = async (req, res, next) => {
     try {
         const { routineExerciseId } = req.params;
         const {
@@ -157,7 +160,7 @@ exports.updateRoutineExercise = async (req, res, next) => {
     }
 };
 
-exports.deleteRoutineExercise = async (req, res, next) => {
+export const deleteRoutineExercise = async (req, res, next) => {
     try {
         const { routineExerciseId } = req.params;
         const { rowCount } = await pool.query(
@@ -181,7 +184,7 @@ exports.deleteRoutineExercise = async (req, res, next) => {
 };
 
 // Actualiza los pesos de una rutina basados en el progreso del workout
-exports.updateRoutineProgress = async (req, res, next) => {
+export const updateRoutineProgress = async (req, res, next) => {
     const client = await pool.connect();
     try {
         const { routineId } = req.params;

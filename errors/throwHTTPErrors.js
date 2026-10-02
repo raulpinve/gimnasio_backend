@@ -1,5 +1,5 @@
 // Function to throw a 400 error (Bad request)
-exports.throwBadRequestError = (field, message = 'Bad request') => {
+export const throwBadRequestError = (field, message = 'Bad request') => {
     const error = new Error(message)
     error.field = field
     error.name = 'BadRequestError'
@@ -7,7 +7,7 @@ exports.throwBadRequestError = (field, message = 'Bad request') => {
 }
 
 // function to throw a 409 error (Confict error)
-exports.throwConflictError = (field, message = 'Conflict') => {
+export const throwConflictError = (field, message = 'Conflict') => {
     const error = new Error(message)
     error.field = field
     error.name = 'ConflictError'
@@ -15,7 +15,7 @@ exports.throwConflictError = (field, message = 'Conflict') => {
 }
 
 // Function to throw a 400 error (Bad Request) with multiple error messages
-exports.throwBadRequestErrorWithMultipleErrors = (errors, message = 'Los datos proporcionados no son válidos') => {
+export const throwBadRequestErrorWithMultipleErrors = (errors, message = 'Los datos proporcionados no son válidos') => {
 
     // Arreglo para almacenar errores únicos
     const uniqueErrors = [];
@@ -48,34 +48,34 @@ exports.throwBadRequestErrorWithMultipleErrors = (errors, message = 'Los datos p
 }
 
 // Function to throw a 401 error (Unauthorized)
-exports.throwUnauthorizedError = (message = 'No autorizado') => {
+export const throwUnauthorizedError = (message = 'No autorizado') => {
     const error = new Error(message)
     error.name = 'UnauthorizedError'
     throw error
 };
 
 // Function to throw a 403 error (Forbidden)
-exports.throwForbiddenError = (message = 'Acceso prohibido') => {
+export const throwForbiddenError = (message = 'Acceso prohibido') => {
     const error = new Error(message)
     error.name = 'ForbiddenError'
     throw error
 };
 
 // Function to throw a 410 error (Gone)
-exports.throwGoneError = (message = "El recurso solicitado ya no se encuentra disponible") => {
+export const throwGoneError = (message = "El recurso solicitado ya no se encuentra disponible") => {
     const error = new Error(message)
     error.name = 'GoneError'
     throw error
 }
 
 // Function to throw a 404 error (Not Found)
-exports.throwNotFoundError = (message = 'Recurso no encontrado') => {
+export const throwNotFoundError = (message = 'Recurso no encontrado') => {
     const error = new Error(message);
     error.name = 'NotFoundError'
     throw error
 };
 // Function to throw a 500 error (Server Error)
-exports.throwServerError = (message = 'Se produjo un error interno del servidor. Por favor, inténtelo de nuevo más tarde.') => {
+export const throwServerError = (message = 'Se produjo un error interno del servidor. Por favor, inténtelo de nuevo más tarde.') => {
     const error = new Error(message)
     error.name = 'ServerError'
     throw error

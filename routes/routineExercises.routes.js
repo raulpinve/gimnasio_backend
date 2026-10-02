@@ -1,14 +1,15 @@
-const router = require("express").Router();
-const routineExercisesController = require("../controllers/routineExercises.controller");
-const { validateExerciseId } = require("../validators/exercises.validator");
-
-const {
+import { Router } from 'express';
+import { createRoutineExercise, deleteRoutineExercise, getRoutineExercise, getRoutineExercises, updateRoutineExercise } from '../controllers/routineExercises.controller.js';
+import { validateExerciseId } from '../validators/exercises.validator.js';
+import {
     validateRoutineExerciseId,
     validateCreateRoutineExercise,
     validateUpdateRoutineExercise,
-    validateIfExerciseWasCreatedOnRoutine,
-} = require("../validators/routineExercises.validator");
-const { validateRoutineId } = require("../validators/routines.validator");
+    validateIfExerciseWasCreatedOnRoutine
+} from '../validators/routineExercises.validator.js';
+import { validateRoutineId } from '../validators/routines.validator.js';
+
+const router = Router();
 
 // Create routine exercise
 router.post(
@@ -17,21 +18,21 @@ router.post(
     validateExerciseId,
     validateIfExerciseWasCreatedOnRoutine,
     validateCreateRoutineExercise,
-    routineExercisesController.createRoutineExercise
+    createRoutineExercise
 );
 
 // Get all exercise from a routine
 router.get(
     "/routine/:routineId",
     validateRoutineId,
-    routineExercisesController.getRoutineExercises
+    getRoutineExercises
 );
 
 // Get routine exercise
 router.get(
     "/:routineExerciseId",
     validateRoutineExerciseId,
-    routineExercisesController.getRoutineExercise
+    getRoutineExercise
 );
 
 // Update a routine exercise 
@@ -39,14 +40,14 @@ router.patch(
     "/:routineExerciseId",
     validateRoutineExerciseId,
     validateUpdateRoutineExercise,
-    routineExercisesController.updateRoutineExercise
+    updateRoutineExercise
 );
 
 // Delete a rotine exercise
 router.delete(
     "/:routineExerciseId",
     validateRoutineExerciseId,
-    routineExercisesController.deleteRoutineExercise
+    deleteRoutineExercise
 );
 
-module.exports = router;
+export default router;

@@ -1,10 +1,10 @@
-const { body, query } = require("express-validator");
-const { throwNotFoundError } = require("../errors/throwHTTPErrors");
-const handleValidationErrors = require("./handleValidationErrors");
-const { pool } = require("../initDB");
-const { validateUUID } = require("./validator");
+import { body, query } from 'express-validator';
+import { throwNotFoundError } from '../errors/throwHTTPErrors.js';
+import handleValidationErrors from './handleValidationErrors.js';
+import { pool } from '../initDB.js';
+import { validateUUID } from './validator.js';
 
-exports.validateWorkoutSetId = async (req, res, next) => {
+export const validateWorkoutSetId = async (req, res, next) => {
     try {
         const workoutSetId = req?.params?.workoutSetId;
         if (!validateUUID(workoutSetId)) {
@@ -36,7 +36,7 @@ exports.validateWorkoutSetId = async (req, res, next) => {
     }
 };
 
-exports.validateCreateWorkoutSet = [
+export const validateCreateWorkoutSet = [
     body("reps")
         .notEmpty().withMessage("reps es requerido.")
         .isInt({ min: 1 })
@@ -54,7 +54,7 @@ exports.validateCreateWorkoutSet = [
     handleValidationErrors
 ];
 
-exports.validateUpdateWorkoutSet = [
+export const validateUpdateWorkoutSet = [
     body("reps")
         .optional()
         .isInt({ min: 1 })

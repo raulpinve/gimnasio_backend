@@ -1,6 +1,6 @@
-const { body } = require("express-validator");
-const { pool } = require("../initDB");
-const handleValidationErrors = require("./handleValidationErrors");
+import { body } from 'express-validator';
+import { pool } from '../initDB.js';
+import handleValidationErrors from './handleValidationErrors.js';
 
 const validatePassword = () => [
     body("password")
@@ -67,13 +67,13 @@ const validateLastName = () => [
         .trim()
 ];
 
-exports.validateLogin = [
+export const validateLogin = [
     ...validateUsernameFormat(),
     ...validatePassword(),
     handleValidationErrors
 ];
 
-exports.validateRegister = [
+export const validateRegister = [
     ...validateFirstName(),
     ...validateLastName(),
     ...validateUsernameFormat(),

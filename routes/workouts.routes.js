@@ -1,52 +1,52 @@
-const router = require("express").Router();
-const workoutsController = require("../controllers/workouts.controller");
-const { validateRoutineId } = require("../validators/routines.validator");
+import { Router } from 'express';
+import { createWorkout, deleteWorkout, finishWorkout, getAllWorkouts, getWorkout, getWorkoutActive } from '../controllers/workouts.controller.js';
+const router = Router();
 
-const {
+import {
     validateWorkoutId,
     validateCreateWorkout,
-    validateRoutineIdCampoOptional,
-} = require("../validators/workouts.validator");
+    validateRoutineIdCampoOptional
+} from '../validators/workouts.validator.js';
 
 // Create workout
 router.post(
     "/",
     validateRoutineIdCampoOptional,
     validateCreateWorkout,
-    workoutsController.createWorkout
+    createWorkout
 );
 
 // Get workout by ID
 router.get(
     "/active",
-    workoutsController.getWorkoutActive
+    getWorkoutActive
 );
 
 // Get workout by ID
 router.get(
     "/:workoutId",
     validateWorkoutId,
-    workoutsController.getWorkout
+    getWorkout
 );
 
 // Get workouts 
 router.get(
     "/",
-    workoutsController.getAllWorkouts
+    getAllWorkouts
 );
 
 // Finish workout
 router.patch(
     "/:workoutId/finish",
     validateWorkoutId,
-    workoutsController.finishWorkout
+    finishWorkout
 );
 
 // Delete workout
 router.delete(
     "/:workoutId",
     validateWorkoutId,
-    workoutsController.deleteWorkout
+    deleteWorkout
 );
 
-module.exports = router;
+export default router;

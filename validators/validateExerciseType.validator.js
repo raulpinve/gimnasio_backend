@@ -1,6 +1,6 @@
-const { throwServerError, throwConflictError } = require("../errors/throwHTTPErrors");
+import { throwServerError, throwConflictError }  from "../errors/throwHTTPErrors.js";
 
-const validateExerciseType = (requiredType = "strength") => {
+export const validateExerciseType = (requiredType = "strength") => {
     return (req, res, next) => {
         try {
             if (!req.exercise) {
@@ -18,4 +18,4 @@ const validateExerciseType = (requiredType = "strength") => {
     };
 };
 
-module.exports = validateExerciseType;
+export default validateExerciseType;

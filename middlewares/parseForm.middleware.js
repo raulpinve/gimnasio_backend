@@ -1,4 +1,4 @@
-const formidable = require('formidable');
+import formidable from 'formidable';
 
 // Middleware to parse forms using the Formidable library
 const parseForm = (customOptions = {}) => {
@@ -47,4 +47,4 @@ const parseForm = (customOptions = {}) => {
     };
 };
 
-module.exports = parseForm;
+export default parseForm;

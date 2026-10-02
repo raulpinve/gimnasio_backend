@@ -1,8 +1,8 @@
-const { throwNotFoundError } = require("../errors/throwHTTPErrors");
-const { pool } = require("../initDB");
-const { validateUUID } = require("./validator");
+import { throwNotFoundError } from '../errors/throwHTTPErrors.js';
+import { pool } from '../initDB.js';
+import { validateUUID } from './validator.js';
 
-exports.validateWorkoutExerciseId = async (req, res, next) => {
+export const validateWorkoutExerciseId = async (req, res, next) => {
     try {
         const workoutExerciseId = req?.params?.workoutExerciseId || req?.body?.workoutExerciseId || req?.query?.workoutExerciseId;
         if (!validateUUID(workoutExerciseId)) {

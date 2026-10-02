@@ -1,14 +1,18 @@
-const router = require("express").Router();
-const { validateExerciseId } = require("../validators/exercises.validator");
-const { validateWorkoutId } = require("../validators/workouts.validator");
-const workoutExerciseController = require("../controllers/workoutExercise.controller");
-const { validateWorkoutExerciseId } = require("../validators/workoutExercise.validator");
-const checkWorkoutNotClosed = require("../middlewares/checkWorkoutNotClosed.middleware");
+import { Router } from 'express';
+import { validateExerciseId } from '../validators/exercises.validator.js';
+import { validateWorkoutId } from '../validators/workouts.validator.js';
+import { createWorkoutExercise, deleteWorkoutExercise, getWorkoutActiveExercises, getWorkoutExercise, getWorkoutExercises } from '../controllers/workoutExercise.controller.js';
+
+import {
+    validateWorkoutExerciseId
+} from '../validators/workoutExercise.validator.js';
+import checkWorkoutNotClosed from '../middlewares/checkWorkoutNotClosed.middleware.js';
+const router = Router();
 
 router.get(
     "/active",
     validateWorkoutId, 
-    workoutExerciseController.getWorkoutActiveExercises
+    getWorkoutActiveExercises
 );
 
 // Create
@@ -16,21 +20,21 @@ router.post(
     "/",
     validateExerciseId, 
     validateWorkoutId,
-    workoutExerciseController.createWorkoutExercise
+    createWorkoutExercise
 );
 
 // Obtener todos
 router.get(
     "/",
     validateWorkoutId,
-    workoutExerciseController.getWorkoutExercises
+    getWorkoutExercises
 );
 
 // Obtener uno
 router.get(
     "/:workoutExerciseId",
     checkWorkoutNotClosed,
-    workoutExerciseController.getWorkoutExercise
+    getWorkoutExercise
 );
 
 // Eliminar
@@ -38,7 +42,7 @@ router.delete(
     "/:workoutExerciseId",
     validateWorkoutExerciseId,
     checkWorkoutNotClosed,
-    workoutExerciseController.deleteWorkoutExercise
+    deleteWorkoutExercise
 );
 
-module.exports = router;
+export default router;
