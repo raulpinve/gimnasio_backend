@@ -10,6 +10,10 @@ import bcrypt from 'bcrypt';
 import { snakeToCamel } from '../utils/utils.helper.js';
 import { getAuth } from 'firebase-admin/auth';
 
+import { findByFirebaseUid, createUserIfNotExists } from "../repositories/user.repository.js";
+import { successResponse } from "../utils/response.utils.js";
+
+
 export const authenticateToken = async (req, res, next) => {
     try {
         const authHeader = req.headers["authorization"];
@@ -310,3 +314,13 @@ export const createMe = async (req, res, next) => {
         next(error);
     }
 };
+
+export async function syncUser(req, res) {
+  const { uid, firstName, lastName } = req.user;
+
+  await createUserIfNotExists(uid, firstName, lastName);
+
+  const user = await findByFirebaseUid(uid);
+
+  return successResponse(res, 200, "Usuario sincronizado correctamente", user);
+}
