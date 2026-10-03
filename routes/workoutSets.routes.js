@@ -5,6 +5,7 @@ import {
 import validateExerciseType from '../validators/validateExerciseType.validator.js';
 import { createWorkoutSet, deleteWorkoutSet, getAllWorkoutSets, getWorkoutSet, updateWorkoutSet } from '../controllers/workoutSets.controller.js';
 import checkWorkoutNotClosed from '../middlewares/checkWorkoutNotClosed.middleware.js';
+import { requireUser } from '../middlewares/auth.middlewares.js';
 const router = Router();
 
 import {
@@ -16,6 +17,7 @@ import {
 // Create workout set
 router.post(
     "/",
+    requireUser,
     validateWorkoutExerciseId,
     checkWorkoutNotClosed,
     validateExerciseType("strength"),
@@ -26,6 +28,7 @@ router.post(
 // Get workout set by ID
 router.get(
     "/:workoutSetId",
+    requireUser,
     validateWorkoutSetId,
     getWorkoutSet
 );
@@ -33,6 +36,7 @@ router.get(
 // Get all workout sets
 router.get(
     "/",
+    requireUser,
     validateWorkoutExerciseId, 
     getAllWorkoutSets
 );
@@ -40,6 +44,7 @@ router.get(
 // Update workout set
 router.patch(
     "/:workoutSetId",
+    requireUser,
     validateWorkoutSetId,
     checkWorkoutNotClosed,
     validateUpdateWorkoutSet,
@@ -49,6 +54,7 @@ router.patch(
 // Delete workout set
 router.delete(
     "/:workoutSetId",
+    requireUser,
     validateWorkoutSetId,
     checkWorkoutNotClosed,
     deleteWorkoutSet

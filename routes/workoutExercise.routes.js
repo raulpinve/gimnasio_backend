@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { validateExerciseId } from '../validators/exercises.validator.js';
 import { validateWorkoutId } from '../validators/workouts.validator.js';
 import { createWorkoutExercise, deleteWorkoutExercise, getWorkoutActiveExercises, getWorkoutExercise, getWorkoutExercises } from '../controllers/workoutExercise.controller.js';
-
+import { requireUser } from '../middlewares/auth.middlewares.js';
 import {
     validateWorkoutExerciseId
 } from '../validators/workoutExercise.validator.js';
@@ -11,6 +11,7 @@ const router = Router();
 
 router.get(
     "/active",
+    requireUser,
     validateWorkoutId, 
     getWorkoutActiveExercises
 );
@@ -18,6 +19,7 @@ router.get(
 // Create
 router.post(
     "/",
+    requireUser,
     validateExerciseId, 
     validateWorkoutId,
     createWorkoutExercise
@@ -26,6 +28,7 @@ router.post(
 // Obtener todos
 router.get(
     "/",
+    requireUser,
     validateWorkoutId,
     getWorkoutExercises
 );
@@ -33,6 +36,7 @@ router.get(
 // Obtener uno
 router.get(
     "/:workoutExerciseId",
+    requireUser,
     checkWorkoutNotClosed,
     getWorkoutExercise
 );
@@ -40,6 +44,7 @@ router.get(
 // Eliminar
 router.delete(
     "/:workoutExerciseId",
+    requireUser,
     validateWorkoutExerciseId,
     checkWorkoutNotClosed,
     deleteWorkoutExercise

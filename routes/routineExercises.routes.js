@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { createRoutineExercise, deleteRoutineExercise, getRoutineExercise, getRoutineExercises, updateRoutineExercise } from '../controllers/routineExercises.controller.js';
 import { validateExerciseId } from '../validators/exercises.validator.js';
+import { requireUser } from '../middlewares/auth.middlewares.js';
+
 import {
     validateRoutineExerciseId,
     validateCreateRoutineExercise,
@@ -14,6 +16,7 @@ const router = Router();
 // Create routine exercise
 router.post(
     "/",
+    requireUser,
     validateRoutineId,
     validateExerciseId,
     validateIfExerciseWasCreatedOnRoutine,
@@ -24,6 +27,7 @@ router.post(
 // Get all exercise from a routine
 router.get(
     "/routine/:routineId",
+    requireUser,
     validateRoutineId,
     getRoutineExercises
 );
@@ -31,6 +35,7 @@ router.get(
 // Get routine exercise
 router.get(
     "/:routineExerciseId",
+    requireUser,
     validateRoutineExerciseId,
     getRoutineExercise
 );
@@ -38,6 +43,7 @@ router.get(
 // Update a routine exercise 
 router.patch(
     "/:routineExerciseId",
+    requireUser,
     validateRoutineExerciseId,
     validateUpdateRoutineExercise,
     updateRoutineExercise
@@ -46,6 +52,7 @@ router.patch(
 // Delete a rotine exercise
 router.delete(
     "/:routineExerciseId",
+    requireUser,
     validateRoutineExerciseId,
     deleteRoutineExercise
 );

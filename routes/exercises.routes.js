@@ -16,7 +16,6 @@ import {
 } from '../validators/exercises.validator.js';
 
 const router = Router();
-
 router.get("/", requireUser, getAllExercises);
 
 router.get(

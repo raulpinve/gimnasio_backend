@@ -13,12 +13,14 @@ import {
     validateUpdateCardioLog
 } from '../validators/cardioLogs.validator.js';
 import checkWorkoutNotClosed from '../middlewares/checkWorkoutNotClosed.middleware.js';
+import { requireUser } from '../middlewares/auth.middlewares.js';
 
 const router = express.Router();
 
 // Crear registro de cardio
 router.post(
     "/",
+    requireUser,
     validateWorkoutExerciseId,
     checkWorkoutNotClosed,
     validateExerciseType("cardio"),
@@ -29,6 +31,7 @@ router.post(
 // Obtener registro de cardio por ID
 router.get(
     "/:cardioLogId",
+    requireUser,
     validateCardioLogId,
     getCardioLog
 );
@@ -36,6 +39,7 @@ router.get(
 // Obtener todos los logs de cardio
 router.get(
     "/",
+    requireUser,
     validateWorkoutExerciseId, 
     getAllCardioLogs
 );
@@ -43,6 +47,7 @@ router.get(
 // Actualizar registro de cardio
 router.patch(
     "/:cardioLogId",
+    requireUser,
     validateCardioLogId,
     checkWorkoutNotClosed,
     validateUpdateCardioLog,
@@ -52,6 +57,7 @@ router.patch(
 // Eliminar registro de cardio
 router.delete(
     "/:cardioLogId",
+    requireUser,
     validateCardioLogId,
     checkWorkoutNotClosed,
     deleteCardioLog

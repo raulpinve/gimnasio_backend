@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { createWorkout, deleteWorkout, finishWorkout, getAllWorkouts, getWorkout, getWorkoutActive } from '../controllers/workouts.controller.js';
+import { requireUser } from '../middlewares/auth.middlewares.js';
 const router = Router();
 
 import {
@@ -11,6 +12,7 @@ import {
 // Create workout
 router.post(
     "/",
+    requireUser,
     validateRoutineIdCampoOptional,
     validateCreateWorkout,
     createWorkout
@@ -19,12 +21,14 @@ router.post(
 // Get workout by ID
 router.get(
     "/active",
+    requireUser,
     getWorkoutActive
 );
 
 // Get workout by ID
 router.get(
     "/:workoutId",
+    requireUser,
     validateWorkoutId,
     getWorkout
 );
@@ -32,12 +36,14 @@ router.get(
 // Get workouts 
 router.get(
     "/",
+    requireUser,
     getAllWorkouts
 );
 
 // Finish workout
 router.patch(
     "/:workoutId/finish",
+    requireUser,
     validateWorkoutId,
     finishWorkout
 );
@@ -45,6 +51,7 @@ router.patch(
 // Delete workout
 router.delete(
     "/:workoutId",
+    requireUser,
     validateWorkoutId,
     deleteWorkout
 );
