@@ -3,29 +3,24 @@ import {
     throwNotFoundError
 } from '../errors/throwHTTPErrors.js';
 import { pool } from '../initDB.js';
-import { snakeToCamel } from '../utils/utils.helper.js';
+import * as profilesRepository from '../repositories/profiles.repository.js';
 import { getTemplateById } from '../utils/programTemplates.helper.js';
-
-const PROFILE_COLUMNS = `user_id, goal, experience, days_per_week,
-                         session_minutes, available_equipment, updated_at`;
+import { snakeToCamel } from '../utils/utils.helper.js';
 
 export const getMyProfile = async (req, res, next) => {
     try {
         const { id: userId } = req.user || {};
 
-        const { rows } = await pool.query(
-            `SELECT ${PROFILE_COLUMNS} FROM user_profiles WHERE user_id = $1`,
-            [userId]
-        );
+        const profile = await profilesRepository.findByUserId({ userId });
 
-        if (rows.length === 0) {
+        if (!profile) {
             return throwNotFoundError("El usuario no tiene perfil de entrenamiento.");
         }
 
         return res.status(200).json({
             statusCode: 200,
             status: "success",
-            data: snakeToCamel(rows[0])
+            data: snakeToCamel(profile)
         });
     } catch (error) {
         next(error);
@@ -43,26 +38,20 @@ export const upsertMyProfile = async (req, res, next) => {
             availableEquipment = []
         } = req.body;
 
-        const { rows } = await pool.query(
-            `INSERT INTO user_profiles
-                (user_id, goal, experience, days_per_week, session_minutes, available_equipment)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             ON CONFLICT (user_id) DO UPDATE SET
-                goal = EXCLUDED.goal,
-                experience = EXCLUDED.experience,
-                days_per_week = EXCLUDED.days_per_week,
-                session_minutes = EXCLUDED.session_minutes,
-                available_equipment = EXCLUDED.available_equipment,
-                updated_at = NOW()
-             RETURNING ${PROFILE_COLUMNS}`,
-            [userId, goal, experience, daysPerWeek, sessionMinutes, availableEquipment]
-        );
+        const profile = await profilesRepository.upsert({
+            userId,
+            goal,
+            experience,
+            daysPerWeek,
+            sessionMinutes,
+            availableEquipment
+        });
 
         return res.status(200).json({
             statusCode: 200,
             status: "success",
             message: "Perfil guardado exitosamente.",
-            data: snakeToCamel(rows[0])
+            data: snakeToCamel(profile)
         });
     } catch (error) {
         next(error);
@@ -74,34 +63,19 @@ export const getMyRecommendation = async (req, res, next) => {
     try {
         const { id: userId } = req.user || {};
 
-        const { rows: profileRows } = await pool.query(
-            `SELECT 1 FROM user_profiles WHERE user_id = $1`,
-            [userId]
-        );
-        if (profileRows.length === 0) {
+        const hasProfile = await profilesRepository.existsByUserId({ userId });
+        if (!hasProfile) {
             return throwBadRequestError("Primero debes completar tu perfil de entrenamiento.");
         }
 
-        // Mismo objetivo y nivel, equipo cubierto, días más cercanos a lo pedido
-        const { rows } = await pool.query(
-            `SELECT t.id
-             FROM program_templates t
-             JOIN user_profiles p ON p.user_id = $1
-             WHERE t.goal = p.goal
-               AND t.experience = p.experience
-               AND t.required_equipment <@ (p.available_equipment || ARRAY['ninguno','peso_corporal'])
-             ORDER BY ABS(t.days_per_week - COALESCE(p.days_per_week, 3)), t.days_per_week
-             LIMIT 1`,
-            [userId]
-        );
-
-        if (rows.length === 0) {
+        const templateId = await profilesRepository.findRecommendedTemplateId({ userId });
+        if (!templateId) {
             return throwNotFoundError(
                 "Aún no tenemos un programa para tu combinación. Puedes crear tu rutina manualmente."
             );
         }
 
-        const template = await getTemplateById(pool, rows[0].id);
+        const template = await getTemplateById(pool, templateId);
 
         return res.status(200).json({
             statusCode: 200,

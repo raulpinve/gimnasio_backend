@@ -2,7 +2,7 @@ import {
     throwBadRequestError,
     throwNotFoundError
 } from '../errors/throwHTTPErrors.js';
-import { pool } from '../initDB.js';
+import * as routinesRepository from '../repositories/routines.repository.js';
 import { snakeToCamel } from '../utils/utils.helper.js';
 
 export const createRoutine = async (req, res, next) => {
@@ -18,22 +18,13 @@ export const createRoutine = async (req, res, next) => {
             return throwBadRequestError("El nombre es requerido.");
         }
 
-        const { rows } = await pool.query(
-            `INSERT INTO routines (user_id, name)
-             VALUES ($1, $2)
-             RETURNING id, name`,
-            [
-                userId,
-                name
-            ]
-        );
+        const routine = await routinesRepository.create({ userId, name });
 
         return res.status(201).json({
             statusCode: 201,
             status: "success",
-            data: snakeToCamel(rows[0])
+            data: snakeToCamel(routine)
         });
-
     } catch (error) {
         next(error);
     }
@@ -43,39 +34,19 @@ export const getRoutine = async (req, res, next) => {
     try {
         const { routineId } = req.params;
 
-        const { rows } = await pool.query(
-            `SELECT r.id, r.name, r.source, r.template_id,
-                    COALESCE(
-                        JSON_AGG(
-                            JSON_BUILD_OBJECT(
-                                'id', e.id,
-                                'name', e.name,
-                                'type', e.type,
-                                'order_index', re.order_index,
-                                'target_sets', re.target_sets,
-                                'target_reps', re.target_reps,
-                                'target_weight', re.target_weight,
-                                'target_duration_seconds', re.target_duration_seconds,
-                                'target_distance_km', re.target_distance_km
-                            ) ORDER BY re.order_index
-                        ) FILTER (WHERE e.id IS NOT NULL),
-                        '[]'
-                    ) AS exercises
-             FROM routines r
-             LEFT JOIN routine_exercises re ON r.id = re.routine_id
-             LEFT JOIN exercises e ON re.exercise_id = e.id
-             WHERE r.id = $1 AND r.user_id = $2 GROUP BY r.id`,
-            [routineId]
-        );
+        const routine = await routinesRepository.findByIdAndUser({
+            routineId,
+            userId: req.user.id
+        });
 
-        if (rows.length === 0) {
-            return res.status(404).json({ message: "Rutina no encontrada." });
+        if (!routine) {
+            return throwNotFoundError("Rutina no encontrada.");
         }
 
         return res.status(200).json({
             statusCode: 200,
             status: "success",
-            data: snakeToCamel(rows[0])
+            data: snakeToCamel(routine)
         });
     } catch (error) {
         next(error);
@@ -89,38 +60,20 @@ export const getAllRoutines = async (req, res, next) => {
         const offset = (page - 1) * pageSize;
 
         const name = req.query.name || null;
-        const userId = req.user.id;  
+        const userId = req.user.id;
 
-        const query = `
-            SELECT r.id, r.name,
-                   COALESCE(
-                       JSON_AGG(JSON_BUILD_OBJECT('name', e.name)) FILTER (WHERE e.id IS NOT NULL), 
-                       '[]'
-                   ) as exercises
-            FROM routines r
-            LEFT JOIN routine_exercises re ON r.id = re.routine_id
-            LEFT JOIN exercises e ON re.exercise_id = e.id
-            WHERE ($1::text IS NULL OR r.name ILIKE '%' || $1 || '%')
-              AND ($2::uuid IS NULL OR r.user_id = $2)
-            GROUP BY r.id
-            ORDER BY r.name
-            LIMIT $3 OFFSET $4
-        `;
+        const [routines, totalRecords] = await Promise.all([
+            routinesRepository.findAll({ name, userId, limit: pageSize, offset }),
+            routinesRepository.count({ name, userId })
+        ]);
 
-        const { rows } = await pool.query(query, [name, userId, pageSize, offset]);
-        const { rows: totalRows } = await pool.query(
-            `SELECT COUNT(*) FROM routines WHERE ($1::text IS NULL OR name ILIKE '%' || $1 || '%') AND ($2::uuid IS NULL OR user_id = $2)`,
-            [name, userId]
-        );
-
-        const totalRecords = parseInt(totalRows[0].count);
         const totalPages = Math.ceil(totalRecords / pageSize);
 
         return res.status(200).json({
             statusCode: 200,
             status: "success",
             pagination: { currentPage: page, totalPages, totalRecords },
-            data: rows.map(snakeToCamel) 
+            data: routines.map(snakeToCamel)
         });
     } catch (error) {
         next(error);
@@ -136,15 +89,13 @@ export const updateRoutine = async (req, res, next) => {
             return throwBadRequestError("Debe enviar al menos un campo para actualizar.");
         }
 
-        const { rows } = await pool.query(
-            `UPDATE routines
-            SET name = COALESCE($1, name)
-            WHERE id = $2 AND user_id = $3
-            RETURNING id, user_id, name`,
-            [name, routineId, req.user.id]
-        );
+        const routine = await routinesRepository.update({
+            routineId,
+            userId: req.user.id,
+            name
+        });
 
-        if (rows.length === 0) {
+        if (!routine) {
             return throwNotFoundError("Rutina no encontrada.");
         }
 
@@ -152,9 +103,8 @@ export const updateRoutine = async (req, res, next) => {
             statusCode: 200,
             status: "success",
             message: "Rutina actualizada exitosamente.",
-            data: snakeToCamel(rows[0])
+            data: snakeToCamel(routine)
         });
-
     } catch (error) {
         next(error);
     }
@@ -163,12 +113,13 @@ export const updateRoutine = async (req, res, next) => {
 export const deleteRoutine = async (req, res, next) => {
     try {
         const { routineId } = req.params;
-        const { rowCount } = await pool.query(
-            `DELETE FROM routines WHERE id = $1 AND user_id = $2`,
-            [routineId, req.user.id]
-        );
 
-        if (rowCount === 0) {
+        const deleted = await routinesRepository.remove({
+            routineId,
+            userId: req.user.id
+        });
+
+        if (!deleted) {
             return throwNotFoundError("Rutina no encontrada.");
         }
 
@@ -177,7 +128,6 @@ export const deleteRoutine = async (req, res, next) => {
             status: "success",
             message: "Rutina eliminada exitosamente."
         });
-
     } catch (error) {
         next(error);
     }

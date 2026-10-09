@@ -1,4 +1,4 @@
-import { findByFirebaseUid, createUserIfNotExists } from "../repositories/user.repository.js";
+import { findByFirebaseUid, createUserIfNotExists } from "../repositories/users.repository.js";
 import { successResponse } from "../utils/response.utils.js";
 
 export async function syncUser(req, res, next) {

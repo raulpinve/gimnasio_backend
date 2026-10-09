@@ -2,7 +2,7 @@ import express from 'express';
 import {
     createCardioLog, getAllCardioLogs, updateCardioLog, deleteCardioLog,
     getCardioLog
-} from '../controllers/cardioLog.controller.js';
+} from '../controllers/cardioLogs.controller.js';
 import {
     validateWorkoutExerciseId
 } from '../validators/workoutExercise.validator.js';

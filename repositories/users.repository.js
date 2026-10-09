@@ -97,3 +97,49 @@ export async function createUserIfNotExists(
     [firebaseUid, email, firstName, lastName]
   );
 }
+
+/**
+ * Total number of finished workouts for a user (by internal user id).
+ */
+export async function countCompletedWorkouts(userId) {
+  const { rows } = await pool.query(
+    `SELECT COUNT(*) AS total
+     FROM workouts
+     WHERE user_id = $1 AND finished_at IS NOT NULL`,
+    [userId]
+  );
+
+  return parseInt(rows[0].total, 10);
+}
+
+/**
+ * Current streak: consecutive days with a finished workout, counting
+ * backwards from today or yesterday. Returns 0 if there is no active streak.
+ */
+export async function getCurrentStreak(userId) {
+  const { rows } = await pool.query(
+    `WITH RECURSIVE dates AS (
+        SELECT CAST(finished_at AS DATE) AS workout_date
+        FROM workouts
+        WHERE user_id = $1 AND finished_at IS NOT NULL
+        GROUP BY workout_date
+     ),
+     streak_calc AS (
+        -- Empezamos desde el último entrenamiento (si fue hoy o ayer)
+        SELECT workout_date, 1 AS day_count
+        FROM dates
+        WHERE workout_date >= CURRENT_DATE - INTERVAL '1 day'
+
+        UNION ALL
+
+        -- Vamos uniendo los días anteriores consecutivos
+        SELECT d.workout_date, s.day_count + 1
+        FROM dates d
+        INNER JOIN streak_calc s ON d.workout_date = s.workout_date - INTERVAL '1 day'
+     )
+     SELECT COALESCE(MAX(day_count), 0) AS current_streak FROM streak_calc`,
+    [userId]
+  );
+
+  return parseInt(rows[0].current_streak, 10);
+}

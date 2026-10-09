@@ -1,27 +1,27 @@
 import {
     throwBadRequestError,
     throwNotFoundError,
-    throwConflictError
 } from '../errors/throwHTTPErrors.js';
-import { snakeToCamel } from '../utils/utils.helper.js';
 import { pool } from '../initDB.js';
+import * as workoutsRepository from '../repositories/workout.repository.js';
+import { snakeToCamel } from '../utils/utils.helper.js';
 
 export const createWorkout = async (req, res, next) => {
     const client = await pool.connect();
 
     try {
         await client.query("BEGIN");
-        const { routineId, name } = req.body || {};
+
+        const { routineId } = req.body || {};
         const { id: userId } = req.user;
-        const routine = req.routine; 
+        const routine = req.routine;
 
         const defaultName = routine?.name || "Entrenamiento libre";
 
         // 1. Verificar si hay workouts abiertos
-        const {rows} = await client.query(
-            `SELECT * from workouts WHERE finished_at is NULL and user_id = $1`, [userId]
-        );
-        if(rows.length > 0){
+        const activeWorkout = await workoutsRepository.findActiveByUser({ userId }, client);
+        if (activeWorkout) {
+            await client.query("ROLLBACK");
             return throwBadRequestError(
                 undefined,
                 "No se puede crear el workout porque ya tienes uno en curso."
@@ -29,38 +29,26 @@ export const createWorkout = async (req, res, next) => {
         }
 
         // 2. Crear el workout principal
-        const { rows: rowsWorkout } = await client.query(
-            `INSERT INTO workouts (name, user_id, routine_id, started_at)
-             VALUES ($1, $2, $3, NOW())
-             RETURNING *`,
-            [
-                defaultName, 
-                userId, 
-                routineId || null 
-            ]
+        const workout = await workoutsRepository.create(
+            { name: defaultName, userId, routineId },
+            client
         );
 
-        const newWorkoutId = rowsWorkout[0].id;
-
-        // 3. Si viene de una rutina, copiar los ejercicios directamente en la base de datos
-        if(routine && routineId){
-            await client.query(
-                `INSERT INTO workout_exercises (workout_id, exercise_id, order_index)
-                SELECT $1, exercise_id, order_index
-                FROM routine_exercises
-                WHERE routine_id = $2
-                ORDER BY order_index`,
-                [newWorkoutId, routineId]
+        // 3. Si viene de una rutina, copiar sus ejercicios al workout
+        if (routine && routineId) {
+            await workoutsRepository.copyExercisesFromRoutine(
+                { workoutId: workout.id, routineId },
+                client
             );
         }
+
         await client.query("COMMIT");
 
         return res.status(201).json({
             statusCode: 201,
             status: "success",
-            data: snakeToCamel(rowsWorkout[0])
+            data: snakeToCamel(workout)
         });
-
     } catch (error) {
         await client.query("ROLLBACK");
         next(error);
@@ -74,70 +62,41 @@ export const getWorkout = async (req, res, next) => {
         const { workoutId } = req.params;
         const { id: userId } = req.user;
 
-        const { rows } = await pool.query(
-            `SELECT *,
-                -- Determina si el entrenamiento está abierto o cerrado
-                CASE 
-                    WHEN finished_at IS NULL THEN 'abierto'
-                    ELSE 'cerrado'
-                END AS estado,
+        const workout = await workoutsRepository.findByIdAndUser({ workoutId, userId });
 
-                -- Formatea la fecha en español: '23 de junio de 2026'
-                to_char(started_at, 'DD "de" TMMonth "de" YYYY') AS fecha,
-                
-                -- Calcula la duración y la formatea dinámicamente
-                CASE 
-                    -- Si no ha terminado, la duración es nula o indeterminada
-                    WHEN finished_at IS NULL THEN NULL
-                    
-                    -- Si dura menos de 1 hora, muestra solo los minutos: '20 min'
-                    WHEN finished_at - started_at < interval '1 hour' 
-                        THEN EXTRACT(MINUTE FROM (finished_at - started_at)) || ' min'
-                    
-                    -- Si dura 1 hora o más, muestra 'H:MMm' (ej. '1:20m')
-                    ELSE 
-                        EXTRACT(HOUR FROM (finished_at - started_at)) || ':' || 
-                        to_char(EXTRACT(MINUTE FROM (finished_at - started_at)), 'FM00') || 'm'
-                END AS duracion
-             FROM workouts
-             WHERE id = $1 AND user_id = $2`,
-            [workoutId, userId]
-        );
-
-        if (rows.length === 0) {
+        if (!workout) {
             return throwNotFoundError("Workout no encontrado.");
         }
 
         return res.status(200).json({
             statusCode: 200,
             status: "success",
-            data: snakeToCamel(rows[0])
+            data: snakeToCamel(workout)
         });
-
     } catch (error) {
         next(error);
     }
 };
 
-export const getWorkoutActive = async(req, res, next) => {
+export const getWorkoutActive = async (req, res, next) => {
     try {
-        const {id: userId} = req.user;
-        if(!userId){
+        const { id: userId } = req.user;
+
+        if (!userId) {
             return throwBadRequestError("userId es requerido.");
         }
-        const query = `SELECT * FROM workouts WHERE finished_at IS NULL AND user_id = $1 LIMIT 1`;
-        const { rows } = await pool.query(query, [userId]);
-        
-    return res.status(200).json({
-        statusCode: 200,
-        status: "success",
-        data: rows.length > 0 ? snakeToCamel(rows[0]) : null
-    });
 
+        const workout = await workoutsRepository.findActiveByUser({ userId });
+
+        return res.status(200).json({
+            statusCode: 200,
+            status: "success",
+            data: workout ? snakeToCamel(workout) : null
+        });
     } catch (error) {
         next(error);
     }
-} 
+};
 
 export const getAllWorkouts = async (req, res, next) => {
     try {
@@ -149,90 +108,23 @@ export const getAllWorkouts = async (req, res, next) => {
 
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
-        const routineId = req.query.routineId;
-
+        const routineId = req.query.routineId || null;
         const offset = (page - 1) * pageSize;
 
-        const query = `
-            SELECT w.*, r.name as routine_name,
-
-                CASE
-                    WHEN w.finished_at IS NULL THEN 'abierto'
-                    ELSE 'cerrado'
-                END AS estado,
-
-                to_char(
-                    w.started_at,
-                    'DD "de" TMMonth "de" YYYY'
-                ) AS fecha,
-
-                CASE
-                    WHEN w.finished_at IS NULL THEN NULL
-
-                    WHEN w.finished_at - w.started_at < interval '1 hour'
-                        THEN EXTRACT(
-                            MINUTE FROM (w.finished_at - w.started_at)
-                        ) || ' min'
-
-                    ELSE
-                        EXTRACT(
-                            HOUR FROM (w.finished_at - w.started_at)
-                        ) || ':' ||
-                        to_char(
-                            EXTRACT(
-                                MINUTE FROM (w.finished_at - w.started_at)
-                            ),
-                            'FM00'
-                        ) || 'm'
-                END AS duracion
-
-            FROM workouts AS w
-            LEFT JOIN routines AS r
-                ON w.routine_id = r.id
-
-            WHERE w.user_id = $1
-                AND ($2::uuid IS NULL OR w.routine_id = $2)
-
-            ORDER BY w.started_at DESC
-            LIMIT $3 OFFSET $4
-        `;
-
-        const { rows } = await pool.query(query, [
-            userId,
-            routineId || null,
-            pageSize,
-            offset
+        const [workouts, totalRecords] = await Promise.all([
+            workoutsRepository.findAll({ userId, routineId, limit: pageSize, offset }),
+            workoutsRepository.count({ userId, routineId })
         ]);
 
-        const { rows: totalRows } = await pool.query(
-            `
-                SELECT COUNT(*)
-                FROM workouts
-                WHERE user_id = $1
-                    AND ($2::uuid IS NULL OR routine_id = $2)
-            `,
-            [
-                userId,
-                routineId || null
-            ]
-        );
-
-        const totalRecords = parseInt(totalRows[0].count);
         const totalPages = Math.ceil(totalRecords / pageSize);
 
         return res.status(200).json({
             statusCode: 200,
             status: "success",
-            pagination: {
-                currentPage: page,
-                totalPages,
-                totalRecords
-            },
-            data: rows.map(snakeToCamel)
+            pagination: { currentPage: page, totalPages, totalRecords },
+            data: workouts.map(snakeToCamel)
         });
-
     } catch (error) {
-        console.log(error)
         next(error);
     }
 };
@@ -246,43 +138,34 @@ export const finishWorkout = async (req, res, next) => {
         await client.query("BEGIN");
 
         // Validar que todos los ejercicios tengan al menos un registro
-        const validation = await client.query(
-            `SELECT we.id
-            FROM workouts w
-            JOIN workout_exercises we ON we.workout_id = w.id
-            LEFT JOIN workout_sets ws ON ws.workout_exercise_id = we.id
-            LEFT JOIN cardio_logs cl ON cl.workout_exercise_id = we.id
-            WHERE w.id = $1 AND w.user_id = $2
-            GROUP BY we.id
-            HAVING COUNT(ws.id) = 0 AND COUNT(cl.id) = 0`,
-            [workoutId, userId]
+        const incompleteExercises = await workoutsRepository.findExercisesWithoutLogs(
+            { workoutId, userId },
+            client
         );
 
-        if (validation.rowCount > 0) {
+        if (incompleteExercises.length > 0) {
             await client.query("ROLLBACK");
-            return throwBadRequestError(undefined, "Debes registrar al menos una serie o un registro de cardio en todos los ejercicios antes de finalizar el entrenamiento.")
+            return throwBadRequestError(
+                undefined,
+                "Debes registrar al menos una serie o un registro de cardio en todos los ejercicios antes de finalizar el entrenamiento."
+            );
         }
 
-        const resFinish = await client.query(
-            `UPDATE workouts
-            SET finished_at = NOW()
-            WHERE id = $1 AND user_id = $2 AND finished_at IS NULL
-            RETURNING *`,
-            [workoutId, userId]
-        );
+        const workout = await workoutsRepository.finish({ workoutId, userId }, client);
 
-        if (resFinish.rowCount === 0) {
+        if (!workout) {
             await client.query("ROLLBACK");
-            throwNotFoundError("Workout no encontrado o ya finalizado.");
+            return throwNotFoundError("Workout no encontrado o ya finalizado.");
         }
+
         await client.query("COMMIT");
 
         return res.status(200).json({
+            statusCode: 200,
             status: "success",
             message: "Entrenamiento finalizado exitosamente.",
-            data: resFinish.rows[0]
+            data: snakeToCamel(workout)
         });
-
     } catch (error) {
         await client.query("ROLLBACK");
         next(error);
@@ -294,19 +177,19 @@ export const finishWorkout = async (req, res, next) => {
 export const deleteWorkout = async (req, res, next) => {
     try {
         const { workoutId } = req.params;
-        const userId = req.user.id;
+        const { id: userId } = req.user;
 
-        // Borramos el workout (esto borrará sus ejercicios y sets por el CASCADE)
-        const result = await pool.query(
-            'DELETE FROM workouts WHERE id = $1 AND user_id = $2',
-            [workoutId, userId]
-        );
+        const deleted = await workoutsRepository.remove({ workoutId, userId });
 
-        if (result.rowCount === 0) {
-            return res.status(404).json({ status: "error", message: "Entrenamiento no encontrado" });
+        if (!deleted) {
+            return throwNotFoundError("Entrenamiento no encontrado.");
         }
 
-        res.status(200).json({ status: "success", message: "Entrenamiento eliminado" });
+        return res.status(200).json({
+            statusCode: 200,
+            status: "success",
+            message: "Entrenamiento eliminado"
+        });
     } catch (error) {
         next(error);
     }

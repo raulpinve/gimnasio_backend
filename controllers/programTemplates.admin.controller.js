@@ -1,39 +1,8 @@
 import { throwNotFoundError } from '../errors/throwHTTPErrors.js';
 import { pool } from '../initDB.js';
-import { snakeToCamel } from '../utils/utils.helper.js';
+import * as programTemplatesRepository from '../repositories/programTemplates.repository.js';
 import { getTemplateById } from '../utils/programTemplates.helper.js';
-
-// Inserta rutinas y ejercicios. El order_index sale de la posición en el arreglo.
-const insertRoutines = async (client, templateId, routines) => {
-    for (const [i, routine] of routines.entries()) {
-        const { rows } = await client.query(
-            `INSERT INTO program_template_routines (template_id, order_index, name)
-             VALUES ($1, $2, $3)
-             RETURNING id`,
-            [templateId, i + 1, routine.name]
-        );
-        const templateRoutineId = rows[0].id;
-
-        for (const [j, ex] of routine.exercises.entries()) {
-            await client.query(
-                `INSERT INTO program_template_routine_exercises
-                    (template_routine_id, exercise_id, order_index, target_sets, target_reps,
-                     target_weight, target_duration_seconds, target_distance_km)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                [
-                    templateRoutineId,
-                    ex.exerciseId,
-                    j + 1,
-                    ex.targetSets ?? null,
-                    ex.targetReps ?? null,
-                    ex.targetWeight ?? null,
-                    ex.targetDurationSeconds ?? null,
-                    ex.targetDistanceKm ?? null
-                ]
-            );
-        }
-    }
-};
+import { snakeToCamel } from '../utils/utils.helper.js';
 
 export const getAllTemplates = async (req, res, next) => {
     try {
@@ -45,38 +14,20 @@ export const getAllTemplates = async (req, res, next) => {
         const goal = req.query.goal || null;
         const experience = req.query.experience || null;
 
-        const filters = `
-            WHERE ($1::text IS NULL OR t.name ILIKE '%' || $1 || '%')
-              AND ($2::text IS NULL OR t.goal = $2)
-              AND ($3::text IS NULL OR t.experience = $3)
-        `;
+        const [templates, totalRecords] = await Promise.all([
+            programTemplatesRepository.findAll({
+                name, goal, experience, limit: pageSize, offset
+            }),
+            programTemplatesRepository.count({ name, goal, experience })
+        ]);
 
-        const { rows } = await pool.query(
-            `SELECT t.id, t.name, t.goal, t.experience, t.days_per_week,
-                    t.required_equipment, t.description,
-                    COUNT(ptr.id)::int AS routines_count
-             FROM program_templates t
-             LEFT JOIN program_template_routines ptr ON ptr.template_id = t.id
-             ${filters}
-             GROUP BY t.id
-             ORDER BY t.goal, t.experience, t.days_per_week, t.name
-             LIMIT $4 OFFSET $5`,
-            [name, goal, experience, pageSize, offset]
-        );
-
-        const { rows: totalRows } = await pool.query(
-            `SELECT COUNT(*) FROM program_templates t ${filters}`,
-            [name, goal, experience]
-        );
-
-        const totalRecords = parseInt(totalRows[0].count);
         const totalPages = Math.ceil(totalRecords / pageSize);
 
         return res.status(200).json({
             statusCode: 200,
             status: "success",
             pagination: { currentPage: page, totalPages, totalRecords },
-            data: rows.map(snakeToCamel)
+            data: templates.map(snakeToCamel)
         });
     } catch (error) {
         next(error);
@@ -112,18 +63,16 @@ export const createTemplate = async (req, res, next) => {
 
         await client.query('BEGIN');
 
-        const { rows } = await client.query(
-            `INSERT INTO program_templates
-                (name, goal, experience, days_per_week, required_equipment, description)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             RETURNING id`,
-            [name, goal, experience, daysPerWeek, requiredEquipment, description]
+        const templateId = await programTemplatesRepository.create(
+            { name, goal, experience, daysPerWeek, requiredEquipment, description },
+            client
         );
-        const templateId = rows[0].id;
 
-        await insertRoutines(client, templateId, routines);
+        await programTemplatesRepository.insertRoutines({ templateId, routines }, client);
 
+        // Se lee dentro de la transacción para ver lo recién insertado
         const template = await getTemplateById(client, templateId);
+
         await client.query('COMMIT');
 
         return res.status(201).json({
@@ -152,23 +101,21 @@ export const replaceTemplate = async (req, res, next) => {
 
         await client.query('BEGIN');
 
-        await client.query(
-            `UPDATE program_templates
-             SET name = $1, goal = $2, experience = $3, days_per_week = $4,
-                 required_equipment = $5, description = $6
-             WHERE id = $7`,
-            [name, goal, experience, daysPerWeek, requiredEquipment, description, templateId]
+        const updated = await programTemplatesRepository.update(
+            { templateId, name, goal, experience, daysPerWeek, requiredEquipment, description },
+            client
         );
 
-        // ON DELETE CASCADE borra también los ejercicios de esas rutinas
-        await client.query(
-            `DELETE FROM program_template_routines WHERE template_id = $1`,
-            [templateId]
-        );
+        if (!updated) {
+            await client.query('ROLLBACK');
+            return throwNotFoundError("Programa no encontrado.");
+        }
 
-        await insertRoutines(client, templateId, routines);
+        await programTemplatesRepository.removeRoutines({ templateId }, client);
+        await programTemplatesRepository.insertRoutines({ templateId, routines }, client);
 
         const template = await getTemplateById(client, templateId);
+
         await client.query('COMMIT');
 
         return res.status(200).json({
@@ -189,13 +136,9 @@ export const deleteTemplate = async (req, res, next) => {
     try {
         const { templateId } = req.params;
 
-        // Las rutinas que ya recibieron los usuarios se conservan (template_id pasa a NULL)
-        const { rowCount } = await pool.query(
-            `DELETE FROM program_templates WHERE id = $1`,
-            [templateId]
-        );
+        const deleted = await programTemplatesRepository.remove({ templateId });
 
-        if (rowCount === 0) {
+        if (!deleted) {
             return throwNotFoundError("Programa no encontrado.");
         }
 

@@ -32,7 +32,6 @@ router.get(
     getExercise
 );
 
-// ---------- Escritura: solo admin ----------
 router.post(
     "/",
     requireUser,

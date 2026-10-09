@@ -3,6 +3,7 @@ import {
     throwNotFoundError
 } from '../errors/throwHTTPErrors.js';
 import { pool } from '../initDB.js';
+import * as routineExercisesRepository from '../repositories/routineExercises.repository.js';
 import { snakeToCamel } from '../utils/utils.helper.js';
 
 export const createRoutineExercise = async (req, res, next) => {
@@ -21,35 +22,23 @@ export const createRoutineExercise = async (req, res, next) => {
             return throwBadRequestError("routineId y exerciseId son requeridos.");
         }
 
-        const { rows } = await pool.query(
-            `INSERT INTO routine_exercises (
-                routine_id,
-                exercise_id,
-                target_sets,
-                target_reps,
-                target_weight, 
-                target_duration_seconds,
-                target_distance_km
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING *`,
-            [
-                routineId,
-                exerciseId,
-                targetSets || null,
-                targetReps || null,
-                targetWeight || null, 
-                targetDurationSeconds || null,
-                targetDistanceKm || null
-            ]
-        );
+        const routineExercise = await routineExercisesRepository.create({
+            routineId,
+            exerciseId,
+            targetSets,
+            targetReps,
+            targetWeight,
+            targetDurationSeconds,
+            targetDistanceKm
+        });
 
         return res.status(201).json({
             statusCode: 201,
             status: "success",
-            data: snakeToCamel(rows[0])
+            data: snakeToCamel(routineExercise)
         });
     } catch (error) {
+        // unique_violation: el ejercicio ya está en la rutina
         if (error.code === '23505') {
             return res.status(400).json({
                 status: "error",
@@ -60,27 +49,21 @@ export const createRoutineExercise = async (req, res, next) => {
     }
 };
 
-
 export const getRoutineExercise = async (req, res, next) => {
     try {
         const { routineExerciseId } = req.params;
-        const { rows } = await pool.query(
-            `SELECT re.*, e.id as exercise_id, e.name as exercise_name, e.type as exercise_type
-             FROM routine_exercises re
-             INNER JOIN exercises as e
-             ON e.id = re.exercise_id
-             WHERE re.id = $1`,
-            [routineExerciseId]
-        );
-        if (rows.length === 0) {
+
+        const routineExercise = await routineExercisesRepository.findById({ routineExerciseId });
+
+        if (!routineExercise) {
             return throwNotFoundError("Ejercicio de rutina no encontrado.");
         }
+
         return res.status(200).json({
             statusCode: 200,
             status: "success",
-            data: snakeToCamel(rows[0])
+            data: snakeToCamel(routineExercise)
         });
-
     } catch (error) {
         next(error);
     }
@@ -89,22 +72,17 @@ export const getRoutineExercise = async (req, res, next) => {
 export const getRoutineExercises = async (req, res, next) => {
     try {
         const { routineId } = req.params;
+
         if (!routineId) {
             return throwBadRequestError("routineId es requerido.");
         }
 
-        const { rows } = await pool.query(
-            `SELECT re.*, e.id as exercise_id, e.name as exercise_name, e.type as exercise_type, e.avatar, e.avatar_thumbnail
-             FROM routine_exercises as re
-             INNER JOIN exercises as e
-             ON e.id = re.exercise_id
-             WHERE re.routine_id = $1`,
-            [routineId]
-        );
+        const routineExercises = await routineExercisesRepository.findAllByRoutine({ routineId });
+
         return res.status(200).json({
             statusCode: 200,
             status: "success",
-            data: rows.map(snakeToCamel)
+            data: routineExercises.map(snakeToCamel)
         });
     } catch (error) {
         next(error);
@@ -117,32 +95,21 @@ export const updateRoutineExercise = async (req, res, next) => {
         const {
             targetSets,
             targetReps,
-            targetWeight, 
+            targetWeight,
             targetDurationSeconds,
             targetDistanceKm
         } = req.body || {};
 
-        const { rows } = await pool.query(
-            `UPDATE routine_exercises
-             SET 
-                target_sets = COALESCE($1, target_sets),
-                target_reps = COALESCE($2, target_reps),
-                target_weight = COALESCE($3, target_weight), 
-                target_duration_seconds = COALESCE($4, target_duration_seconds),
-                target_distance_km = COALESCE($5, target_distance_km)
-             WHERE id = $6
-             RETURNING *`,
-            [
-                targetSets,
-                targetReps,
-                targetWeight, 
-                targetDurationSeconds,
-                targetDistanceKm,
-                routineExerciseId
-            ]
-        );
+        const routineExercise = await routineExercisesRepository.update({
+            routineExerciseId,
+            targetSets,
+            targetReps,
+            targetWeight,
+            targetDurationSeconds,
+            targetDistanceKm
+        });
 
-        if (rows.length === 0) {
+        if (!routineExercise) {
             return throwNotFoundError("Ejercicio de rutina no encontrado.");
         }
 
@@ -150,12 +117,9 @@ export const updateRoutineExercise = async (req, res, next) => {
             statusCode: 200,
             status: "success",
             message: "Ejercicio de rutina actualizado.",
-            data: snakeToCamel(rows[0])
+            data: snakeToCamel(routineExercise)
         });
-
     } catch (error) {
-        console.log(error);
-
         next(error);
     }
 };
@@ -163,13 +127,11 @@ export const updateRoutineExercise = async (req, res, next) => {
 export const deleteRoutineExercise = async (req, res, next) => {
     try {
         const { routineExerciseId } = req.params;
-        const { rowCount } = await pool.query(
-            `DELETE FROM routine_exercises WHERE id = $1`,
-            [routineExerciseId]
-        );
 
-        if (rowCount === 0) {
-            return throwNotFoundError("Rutina de ejercicio no encontrado.");
+        const deleted = await routineExercisesRepository.remove({ routineExerciseId });
+
+        if (!deleted) {
+            return throwNotFoundError("Ejercicio de rutina no encontrado.");
         }
 
         return res.status(200).json({
@@ -177,7 +139,6 @@ export const deleteRoutineExercise = async (req, res, next) => {
             status: "success",
             message: "Ejercicio de rutina eliminado."
         });
-
     } catch (error) {
         next(error);
     }
@@ -192,17 +153,20 @@ export const updateRoutineProgress = async (req, res, next) => {
 
         await client.query("BEGIN");
 
-        for (const update of updates) {
-            await client.query(
-                `UPDATE routine_exercises 
-                 SET target_weight = $1 
-                 WHERE routine_id = $2 AND exercise_id = $3`,
-                [update.newWeight, routineId, update.exerciseId]
+        for (const { exerciseId, newWeight } of updates) {
+            await routineExercisesRepository.updateWeight(
+                { routineId, exerciseId, newWeight },
+                client // mismo client => misma transacción
             );
         }
 
         await client.query("COMMIT");
-        res.json({ status: "success", message: "Rutina actualizada correctamente" });
+
+        return res.status(200).json({
+            statusCode: 200,
+            status: "success",
+            message: "Rutina actualizada correctamente"
+        });
     } catch (error) {
         await client.query("ROLLBACK");
         next(error);
