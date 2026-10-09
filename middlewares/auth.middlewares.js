@@ -45,7 +45,7 @@ export async function verifyFirebaseToken(req, res, next) {
 export async function attachUser(req, res, next) {
   try {
     const { rows } = await pool.query(
-      "SELECT id FROM users WHERE firebase_uid = $1",
+      "SELECT id, role FROM users WHERE firebase_uid = $1",
       [req.user.uid]
     );
 
@@ -57,6 +57,7 @@ export async function attachUser(req, res, next) {
     }
 
     req.user.id = rows[0].id;
+    req.user.role = rows[0].role;
     next();
   } catch (error) {
     next(error);

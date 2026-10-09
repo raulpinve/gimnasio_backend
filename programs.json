@@ -1,0 +1,242 @@
+[
+  {
+    "name": "Full Body A/B - Hipertrofia (gimnasio)",
+    "goal": "hipertrofia",
+    "experience": "principiante",
+    "daysPerWeek": 3,
+    "requiredEquipment": ["maquinas", "mancuernas"],
+    "description": "Cuerpo completo con dos rutinas que se alternan. Ideal para empezar en el gimnasio.",
+    "routines": [
+      {
+        "name": "Hipertrofia Full Body - Día A",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000001", "targetSets": 3, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000002", "targetSets": 3, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000003", "targetSets": 3, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000005", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000016", "targetSets": 3, "targetReps": 15 }
+        ]
+      },
+      {
+        "name": "Hipertrofia Full Body - Día B",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000010", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000004", "targetSets": 3, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000012", "targetSets": 3, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000006", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000017", "targetSets": 3, "targetReps": 15 }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Torso / Pierna 4 días - Hipertrofia (gimnasio)",
+    "goal": "hipertrofia",
+    "experience": "intermedio",
+    "daysPerWeek": 4,
+    "requiredEquipment": ["maquinas", "mancuernas"],
+    "description": "Dos días de torso y dos de pierna por semana. Para quien ya tiene una base de entrenamiento.",
+    "routines": [
+      {
+        "name": "Torso/Pierna - Torso A",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000002", "targetSets": 4, "targetReps": 8 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000004", "targetSets": 4, "targetReps": 8 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000012", "targetSets": 3, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000005", "targetSets": 3, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000006", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000007", "targetSets": 3, "targetReps": 12 }
+        ]
+      },
+      {
+        "name": "Torso/Pierna - Pierna A",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000001", "targetSets": 4, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000011", "targetSets": 3, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000009", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000008", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000014", "targetSets": 4, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000016", "targetSets": 3, "targetReps": 15 }
+        ]
+      },
+      {
+        "name": "Torso/Pierna - Torso B",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000003", "targetSets": 4, "targetReps": 8 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000012", "targetSets": 4, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000004", "targetSets": 3, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000013", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000006", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000007", "targetSets": 3, "targetReps": 12 }
+        ]
+      },
+      {
+        "name": "Torso/Pierna - Pierna B",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000010", "targetSets": 4, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000011", "targetSets": 4, "targetReps": 8 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000001", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000008", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000014", "targetSets": 4, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000016", "targetSets": 3, "targetReps": 20 }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Pérdida de grasa 3 días (gimnasio)",
+    "goal": "perdida_grasa",
+    "experience": "principiante",
+    "daysPerWeek": 3,
+    "requiredEquipment": ["maquinas", "mancuernas"],
+    "description": "Fuerza con más repeticiones y 20 minutos de cardio al final de cada sesión.",
+    "routines": [
+      {
+        "name": "Pérdida de grasa - Día 1",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000001", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000002", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000003", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000010", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000019", "targetDurationSeconds": 1200 }
+        ]
+      },
+      {
+        "name": "Pérdida de grasa - Día 2",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000008", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000004", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000005", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000017", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000020", "targetDurationSeconds": 1200 }
+        ]
+      },
+      {
+        "name": "Pérdida de grasa - Día 3",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000010", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000012", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000003", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000016", "targetSets": 3, "targetReps": 20 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000021", "targetDurationSeconds": 1200 }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Salud general 2 días (máquinas)",
+    "goal": "salud_general",
+    "experience": "principiante",
+    "daysPerWeek": 2,
+    "requiredEquipment": ["maquinas"],
+    "description": "Programa suave de dos días con máquinas y cardio ligero. Perfecto para retomar el hábito.",
+    "routines": [
+      {
+        "name": "Salud general - Día 1",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000001", "targetSets": 2, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000002", "targetSets": 2, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000003", "targetSets": 2, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000016", "targetSets": 2, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000019", "targetDurationSeconds": 900 }
+        ]
+      },
+      {
+        "name": "Salud general - Día 2",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000009", "targetSets": 2, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000004", "targetSets": 2, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000008", "targetSets": 2, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000017", "targetSets": 2, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000020", "targetDurationSeconds": 900 }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Fuerza básica 3 días (gimnasio)",
+    "goal": "fuerza",
+    "experience": "principiante",
+    "daysPerWeek": 3,
+    "requiredEquipment": ["maquinas", "mancuernas"],
+    "description": "Menos repeticiones y más series en los movimientos básicos, con descansos largos.",
+    "routines": [
+      {
+        "name": "Fuerza básica - Día A",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000001", "targetSets": 4, "targetReps": 6 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000002", "targetSets": 4, "targetReps": 6 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000003", "targetSets": 4, "targetReps": 6 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000005", "targetSets": 3, "targetReps": 8 }
+        ]
+      },
+      {
+        "name": "Fuerza básica - Día B",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000010", "targetSets": 4, "targetReps": 6 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000004", "targetSets": 4, "targetReps": 6 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000012", "targetSets": 4, "targetReps": 6 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000011", "targetSets": 3, "targetReps": 8 }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Full Body en casa con mancuernas",
+    "goal": "hipertrofia",
+    "experience": "principiante",
+    "daysPerWeek": 3,
+    "requiredEquipment": ["mancuernas"],
+    "description": "Cuerpo completo para entrenar en casa solo con un par de mancuernas.",
+    "routines": [
+      {
+        "name": "Casa con mancuernas - Día A",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000010", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000005", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000006", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000017", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000016", "targetSets": 3, "targetReps": 15 }
+        ]
+      },
+      {
+        "name": "Casa con mancuernas - Día B",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000011", "targetSets": 3, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000018", "targetSets": 3, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000013", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000007", "targetSets": 3, "targetReps": 12 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000017", "targetSets": 3, "targetReps": 15 }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Peso corporal en casa",
+    "goal": "salud_general",
+    "experience": "principiante",
+    "daysPerWeek": 3,
+    "requiredEquipment": ["peso_corporal"],
+    "description": "Sin equipo: solo tu cuerpo. En la plancha, las repeticiones se cuentan como segundos.",
+    "routines": [
+      {
+        "name": "Peso corporal - Día A",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000018", "targetSets": 3, "targetReps": 8 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000017", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000016", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000015", "targetSets": 3, "targetReps": 30 }
+        ]
+      },
+      {
+        "name": "Peso corporal - Día B",
+        "exercises": [
+          { "exerciseId": "00000000-0000-4000-8000-000000000017", "targetSets": 3, "targetReps": 15 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000018", "targetSets": 3, "targetReps": 10 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000016", "targetSets": 3, "targetReps": 20 },
+          { "exerciseId": "00000000-0000-4000-8000-000000000015", "targetSets": 3, "targetReps": 30 }
+        ]
+      }
+    ]
+  }
+]

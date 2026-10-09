@@ -45,11 +45,12 @@ export const createWorkout = async (req, res, next) => {
         // 3. Si viene de una rutina, copiar los ejercicios directamente en la base de datos
         if(routine && routineId){
             await client.query(
-                `INSERT INTO workout_exercises (workout_id, exercise_id) 
-                    SELECT $1, exercise_id 
-                    FROM routine_exercises
-                    WHERE routine_id = $2`, 
-                [newWorkoutId, routineId],
+                `INSERT INTO workout_exercises (workout_id, exercise_id, order_index)
+                SELECT $1, exercise_id, order_index
+                FROM routine_exercises
+                WHERE routine_id = $2
+                ORDER BY order_index`,
+                [newWorkoutId, routineId]
             );
         }
         await client.query("COMMIT");
@@ -71,6 +72,7 @@ export const createWorkout = async (req, res, next) => {
 export const getWorkout = async (req, res, next) => {
     try {
         const { workoutId } = req.params;
+        const { id: userId } = req.user;
 
         const { rows } = await pool.query(
             `SELECT *,
@@ -98,8 +100,8 @@ export const getWorkout = async (req, res, next) => {
                         to_char(EXTRACT(MINUTE FROM (finished_at - started_at)), 'FM00') || 'm'
                 END AS duracion
              FROM workouts
-             WHERE id = $1`,
-            [workoutId]
+             WHERE id = $1 AND user_id = $2`,
+            [workoutId, userId]
         );
 
         if (rows.length === 0) {
@@ -237,6 +239,7 @@ export const getAllWorkouts = async (req, res, next) => {
 
 export const finishWorkout = async (req, res, next) => {
     const { workoutId } = req.params;
+    const { id: userId } = req.user;
     const client = await pool.connect();
 
     try {
@@ -244,19 +247,15 @@ export const finishWorkout = async (req, res, next) => {
 
         // Validar que todos los ejercicios tengan al menos un registro
         const validation = await client.query(
-            `
-            SELECT we.id
-            FROM workout_exercises we
-            LEFT JOIN workout_sets ws
-                ON ws.workout_exercise_id = we.id
-            LEFT JOIN cardio_logs cl
-                ON cl.workout_exercise_id = we.id
-            WHERE we.workout_id = $1
+            `SELECT we.id
+            FROM workouts w
+            JOIN workout_exercises we ON we.workout_id = w.id
+            LEFT JOIN workout_sets ws ON ws.workout_exercise_id = we.id
+            LEFT JOIN cardio_logs cl ON cl.workout_exercise_id = we.id
+            WHERE w.id = $1 AND w.user_id = $2
             GROUP BY we.id
-            HAVING COUNT(ws.id) = 0
-               AND COUNT(cl.id) = 0;
-            `,
-            [workoutId]
+            HAVING COUNT(ws.id) = 0 AND COUNT(cl.id) = 0`,
+            [workoutId, userId]
         );
 
         if (validation.rowCount > 0) {
@@ -265,14 +264,11 @@ export const finishWorkout = async (req, res, next) => {
         }
 
         const resFinish = await client.query(
-            `
-            UPDATE workouts
+            `UPDATE workouts
             SET finished_at = NOW()
-            WHERE id = $1
-              AND finished_at IS NULL
-            RETURNING *;
-            `,
-            [workoutId]
+            WHERE id = $1 AND user_id = $2 AND finished_at IS NULL
+            RETURNING *`,
+            [workoutId, userId]
         );
 
         if (resFinish.rowCount === 0) {

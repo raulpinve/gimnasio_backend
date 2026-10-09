@@ -12,10 +12,11 @@ export const validateRoutineId = async (req, res, next) => {
         }
 
         const { rows } = await pool.query(
-            `SELECT id FROM routines WHERE id = $1`,
-            [routineId]
+            `SELECT id FROM routines WHERE id = $1 AND user_id = $2`,
+            [routineId, req.user.id]
         );
 
+        // Mismo mensaje si no existe o si es de otro usuario: no revela que existe
         if (rows.length === 0) {
             return throwNotFoundError("La rutina no existe.");
         }
@@ -25,7 +26,7 @@ export const validateRoutineId = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-};
+}
 
 export const validateCreateRoutine = [
     body("name")
@@ -33,10 +34,11 @@ export const validateCreateRoutine = [
         .isLength({ min: 2, max: 100 })
         .withMessage("El nombre debe tener entre 2 y 100 caracteres.")
         .trim()
-        .custom(async (value) => {
+        .custom(async (value, { req }) => {
             const { rows } = await pool.query(
-                `SELECT id FROM routines WHERE LOWER(name) = LOWER($1)`,
-                [value]
+                `SELECT id FROM routines
+                 WHERE user_id = $1 AND LOWER(name) = LOWER($2)`,
+                [req.user.id, value]
             );
 
             if (rows.length > 0) {
@@ -59,10 +61,11 @@ export const validateUpdateRoutine = [
             const routineId = req.params.routineId;
 
             const { rows } = await pool.query(
-                `SELECT id FROM routines 
-                 WHERE LOWER(name) = LOWER($1)
-                 AND id != $2`,
-                [value, routineId]
+                `SELECT id FROM routines
+                WHERE user_id = $1
+                AND LOWER(name) = LOWER($2)
+                AND id != $3`,
+                [req.user.id, value, routineId]
             );
 
             if (rows.length > 0) {

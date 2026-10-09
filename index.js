@@ -18,6 +18,9 @@ import workoutsExercises from './routes/workoutExercise.routes.js';
 import workoutSetsRoutes from './routes/workoutSets.routes.js';
 import cardioLogsRoutes from './routes/cardioLog.routes.js';
 import userRoutes from './routes/users.routes.js';
+import profileRoutes from './routes/profiles.routes.js';
+import programTemplatesRouter from './routes/programTemplates.routes.js';
+import programTemplatesAdminRouter from './routes/programTemplates.admin.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,7 +52,6 @@ app.use(express.urlencoded({
 
 // Archivos estáticos
 app.use('/api/uploads', express.static( path.join(__dirname, 'uploads')));
-
 app.use('/api/auth', authRoutes);
 app.use('/api/exercises', exercisesRoutes);
 app.use('/api/routines', routinesRoutes);
@@ -59,6 +61,15 @@ app.use('/api/workouts-exercises', workoutsExercises);
 app.use('/api/workout-sets', workoutSetsRoutes);
 app.use('/api/cardio-logs', cardioLogsRoutes);
 app.use('/api/users', userRoutes);
+
+// Es el perfil de entrenamiento del usuario logueado (sus respuestas del onboarding). 
+// Está abierto a cualquier usuario autenticado.
+app.use('/api/profiles', profileRoutes) 
+// Es el catálogo de programas, visto desde el lado del usuario. Cualquier usuario autenticado puede 
+// verlos y elegir uno. No puede crear, editar ni borrar.
+app.use('/api/program-templates', programTemplatesRouter); 
+// Es la gestión de programas, solo para admins (role = 'admin').
+app.use('/api/admin/program-templates', programTemplatesAdminRouter); 
 
 app.use(handleErrorResponse);
 const port = process.env.PORT || 5000;

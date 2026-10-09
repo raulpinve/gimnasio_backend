@@ -44,23 +44,27 @@ export const getRoutine = async (req, res, next) => {
         const { routineId } = req.params;
 
         const { rows } = await pool.query(
-            `SELECT r.id, r.name,
+            `SELECT r.id, r.name, r.source, r.template_id,
                     COALESCE(
                         JSON_AGG(
                             JSON_BUILD_OBJECT(
                                 'id', e.id,
                                 'name', e.name,
+                                'type', e.type,
+                                'order_index', re.order_index,
                                 'target_sets', re.target_sets,
-                                'target_reps', re.target_reps
-                            )
-                        ) FILTER (WHERE e.id IS NOT NULL), 
+                                'target_reps', re.target_reps,
+                                'target_weight', re.target_weight,
+                                'target_duration_seconds', re.target_duration_seconds,
+                                'target_distance_km', re.target_distance_km
+                            ) ORDER BY re.order_index
+                        ) FILTER (WHERE e.id IS NOT NULL),
                         '[]'
-                    ) as exercises
+                    ) AS exercises
              FROM routines r
              LEFT JOIN routine_exercises re ON r.id = re.routine_id
              LEFT JOIN exercises e ON re.exercise_id = e.id
-             WHERE r.id = $1
-             GROUP BY r.id`,
+             WHERE r.id = $1 AND r.user_id = $2 GROUP BY r.id`,
             [routineId]
         );
 
@@ -85,7 +89,7 @@ export const getAllRoutines = async (req, res, next) => {
         const offset = (page - 1) * pageSize;
 
         const name = req.query.name || null;
-        const userId = req.query.userId || null;
+        const userId = req.user.id;  
 
         const query = `
             SELECT r.id, r.name,
@@ -134,10 +138,10 @@ export const updateRoutine = async (req, res, next) => {
 
         const { rows } = await pool.query(
             `UPDATE routines
-             SET name = COALESCE($1, name)
-             WHERE id = $2
-             RETURNING id, user_id, name`,
-            [name, routineId]
+            SET name = COALESCE($1, name)
+            WHERE id = $2 AND user_id = $3
+            RETURNING id, user_id, name`,
+            [name, routineId, req.user.id]
         );
 
         if (rows.length === 0) {
@@ -160,8 +164,8 @@ export const deleteRoutine = async (req, res, next) => {
     try {
         const { routineId } = req.params;
         const { rowCount } = await pool.query(
-            `DELETE FROM routines WHERE id = $1`,
-            [routineId]
+            `DELETE FROM routines WHERE id = $1 AND user_id = $2`,
+            [routineId, req.user.id]
         );
 
         if (rowCount === 0) {
