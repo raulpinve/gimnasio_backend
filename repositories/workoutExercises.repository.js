@@ -1,5 +1,11 @@
 import { pool } from '../initDB.js';
 
+/**
+ * Repository de workout_exercises.
+ * Solo acceso a datos; todos los métodos aceptan un `db` opcional
+ * (pool por defecto, o un client si se está dentro de una transacción).
+ */
+
 // Fragmentos de SQL idénticos que estaban repetidos en varias queries.
 // Esperan los alias `e` (exercises) y `w` (workouts) en la query que los use.
 const PERSONAL_RECORD_SQL = `
@@ -27,7 +33,14 @@ const LAST_WEIGHT_UNIT_SQL = `
     ), 'kg') AS "suggestedWeightUnit"
 `;
 
-export const create = async ({ workoutId, exerciseId }, db = pool) => {
+// Devuelve null si el workout no existe o no pertenece al usuario
+export const create = async ({ userId, workoutId, exerciseId }, db = pool) => {
+    const { rowCount } = await db.query(
+        `SELECT 1 FROM workouts WHERE id = $1 AND user_id = $2`,
+        [workoutId, userId]
+    );
+    if (rowCount === 0) return null;
+
     const { rows } = await db.query(
         `INSERT INTO workout_exercises (workout_id, exercise_id)
          VALUES ($1, $2)
@@ -38,7 +51,7 @@ export const create = async ({ workoutId, exerciseId }, db = pool) => {
 };
 
 // Detalle de un workout_exercise. Los alias ya vienen en camelCase.
-export const findById = async ({ workoutExerciseId }, db = pool) => {
+export const findById = async ({ workoutExerciseId, userId }, db = pool) => {
     const { rows } = await db.query(
         `SELECT
             e.id AS "exerciseId",
@@ -98,13 +111,13 @@ export const findById = async ({ workoutExerciseId }, db = pool) => {
          LEFT JOIN routine_exercises re
             ON w.routine_id = re.routine_id
            AND we.exercise_id = re.exercise_id
-         WHERE we.id = $1`,
-        [workoutExerciseId]
+         WHERE we.id = $1 AND w.user_id = $2`,
+        [workoutExerciseId, userId]
     );
     return rows[0] || null;
 };
 
-export const findAllByWorkout = async ({ workoutId, limit, offset }, db = pool) => {
+export const findAllByWorkout = async ({ workoutId, userId, limit, offset }, db = pool) => {
     const { rows } = await db.query(
         `SELECT
             we.id AS workout_exercise_id,
@@ -124,22 +137,25 @@ export const findAllByWorkout = async ({ workoutId, limit, offset }, db = pool) 
             re.target_distance_km
          FROM workout_exercises AS we
          INNER JOIN exercises AS e ON we.exercise_id = e.id
-         LEFT JOIN workouts AS w ON we.workout_id = w.id
+         JOIN workouts AS w ON we.workout_id = w.id
          LEFT JOIN routine_exercises AS re
             ON w.routine_id = re.routine_id
            AND we.exercise_id = re.exercise_id
-         WHERE we.workout_id = $1
+         WHERE we.workout_id = $1 AND w.user_id = $2
          ORDER BY we.created_at ASC
-         LIMIT $2 OFFSET $3`,
-        [workoutId, limit, offset]
+         LIMIT $3 OFFSET $4`,
+        [workoutId, userId, limit, offset]
     );
     return rows;
 };
 
-export const countByWorkout = async ({ workoutId }, db = pool) => {
+export const countByWorkout = async ({ workoutId, userId }, db = pool) => {
     const { rows } = await db.query(
-        `SELECT COUNT(*) FROM workout_exercises WHERE workout_id = $1`,
-        [workoutId]
+        `SELECT COUNT(*)
+         FROM workout_exercises we
+         JOIN workouts w ON w.id = we.workout_id
+         WHERE we.workout_id = $1 AND w.user_id = $2`,
+        [workoutId, userId]
     );
     return parseInt(rows[0].count, 10);
 };
@@ -148,7 +164,7 @@ export const countByWorkout = async ({ workoutId }, db = pool) => {
 //   Parte 1: los planificados en la rutina (hayan sido iniciados o no)
 //   Parte 2: los extras agregados fuera de la rutina (o sesión libre)
 // Los alias ya vienen en camelCase.
-export const findActiveByWorkout = async ({ workoutId }, db = pool) => {
+export const findActiveByWorkout = async ({ workoutId, userId }, db = pool) => {
     const { rows } = await db.query(
         `-- PARTE 1: ejercicios planificados de la rutina
          SELECT
@@ -183,7 +199,7 @@ export const findActiveByWorkout = async ({ workoutId }, db = pool) => {
          JOIN routine_exercises re ON w.routine_id = re.routine_id
          JOIN exercises e ON re.exercise_id = e.id
          LEFT JOIN workout_exercises we ON (we.workout_id = w.id AND we.exercise_id = e.id)
-         WHERE w.id = $1
+         WHERE w.id = $1 AND w.user_id = $2
 
          UNION
 
@@ -228,18 +244,20 @@ export const findActiveByWorkout = async ({ workoutId }, db = pool) => {
          JOIN exercises e ON we.exercise_id = e.id
          JOIN workouts w ON we.workout_id = w.id
          LEFT JOIN routine_exercises re ON (w.routine_id = re.routine_id AND we.exercise_id = re.exercise_id)
-         WHERE we.workout_id = $1 AND re.exercise_id IS NULL
+         WHERE we.workout_id = $1 AND w.user_id = $2 AND re.exercise_id IS NULL
 
          ORDER BY "orderIndex" ASC, "createdAt" ASC`,
-        [workoutId]
+        [workoutId, userId]
     );
     return rows;
 };
 
-export const remove = async ({ workoutExerciseId }, db = pool) => {
+export const remove = async ({ workoutExerciseId, userId }, db = pool) => {
     const { rowCount } = await db.query(
-        `DELETE FROM workout_exercises WHERE id = $1`,
-        [workoutExerciseId]
+        `DELETE FROM workout_exercises
+         WHERE id = $1
+           AND workout_id IN (SELECT id FROM workouts WHERE user_id = $2)`,
+        [workoutExerciseId, userId]
     );
     return rowCount > 0;
 };

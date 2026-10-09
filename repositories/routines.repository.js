@@ -95,3 +95,11 @@ export const remove = async ({ routineId, userId }, db = pool) => {
     );
     return rowCount > 0;
 };
+
+export const existsByIdAndUser = async ({ routineId, userId }, db = pool) => {
+    const { rowCount } = await db.query(
+        `SELECT 1 FROM routines WHERE id = $1 AND user_id = $2`,
+        [routineId, userId]
+    );
+    return rowCount > 0;
+};

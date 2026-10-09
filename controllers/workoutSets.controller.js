@@ -7,17 +7,29 @@ export const createWorkoutSet = async (req, res, next) => {
     const client = await pool.connect();
 
     try {
+        const { id: userId } = req.user;
         const { workoutExerciseId, reps, weight, rpe, weightUnit } = req.body;
 
         await client.query("BEGIN");
 
-        // 1. Calcular el siguiente número de serie
+        // 1. Verificar que el ejercicio es del usuario y bloquearlo mientras dure
+        //    la transacción (evita números de serie repetidos)
+        const owned = await workoutSetsRepository.lockOwnedWorkoutExercise(
+            { workoutExerciseId, userId },
+            client
+        );
+        if (!owned) {
+            await client.query("ROLLBACK");
+            return throwNotFoundError("Ejercicio del workout no encontrado.");
+        }
+
+        // 2. Calcular el siguiente número de serie
         const setNumber = await workoutSetsRepository.getNextSetNumber(
             { workoutExerciseId },
             client
         );
 
-        // 2. Insertar la serie con su número secuencial
+        // 3. Insertar la serie con su número secuencial
         const workoutSet = await workoutSetsRepository.create(
             { workoutExerciseId, setNumber, reps, weight, rpe, weightUnit },
             client
@@ -40,9 +52,11 @@ export const createWorkoutSet = async (req, res, next) => {
 
 export const getWorkoutSet = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
+        // OJO: el param de la ruta se llama workoutExerciseId pero es el id del set
         const { workoutExerciseId: workoutSetId } = req.params;
 
-        const workoutSet = await workoutSetsRepository.findById({ workoutSetId });
+        const workoutSet = await workoutSetsRepository.findById({ workoutSetId, userId });
 
         if (!workoutSet) {
             return throwNotFoundError("Set no encontrado.");
@@ -60,10 +74,12 @@ export const getWorkoutSet = async (req, res, next) => {
 
 export const getAllWorkoutSets = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const { workoutExerciseId } = req.query;
 
         const workoutSets = await workoutSetsRepository.findAllByWorkoutExercise({
-            workoutExerciseId
+            workoutExerciseId,
+            userId
         });
 
         return res.status(200).json({
@@ -78,10 +94,16 @@ export const getAllWorkoutSets = async (req, res, next) => {
 
 export const updateWorkoutSet = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const { workoutSetId } = req.params;
         const { reps, weight } = req.body || {};
 
-        const workoutSet = await workoutSetsRepository.update({ workoutSetId, reps, weight });
+        const workoutSet = await workoutSetsRepository.update({
+            workoutSetId,
+            userId,
+            reps,
+            weight
+        });
 
         if (!workoutSet) {
             return throwNotFoundError("Set no encontrado.");
@@ -100,9 +122,10 @@ export const updateWorkoutSet = async (req, res, next) => {
 
 export const deleteWorkoutSet = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const { workoutSetId } = req.params;
 
-        const deleted = await workoutSetsRepository.remove({ workoutSetId });
+        const deleted = await workoutSetsRepository.remove({ workoutSetId, userId });
 
         if (!deleted) {
             return throwNotFoundError("Set no encontrado.");

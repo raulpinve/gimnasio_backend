@@ -4,10 +4,12 @@ import {
 } from '../errors/throwHTTPErrors.js';
 import { pool } from '../initDB.js';
 import * as routineExercisesRepository from '../repositories/routineExercises.repository.js';
+import * as routinesRepository from '../repositories/routines.repository.js';
 import { snakeToCamel } from '../utils/utils.helper.js';
 
 export const createRoutineExercise = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const {
             routineId,
             exerciseId,
@@ -23,6 +25,7 @@ export const createRoutineExercise = async (req, res, next) => {
         }
 
         const routineExercise = await routineExercisesRepository.create({
+            userId,
             routineId,
             exerciseId,
             targetSets,
@@ -31,6 +34,10 @@ export const createRoutineExercise = async (req, res, next) => {
             targetDurationSeconds,
             targetDistanceKm
         });
+
+        if (!routineExercise) {
+            return throwNotFoundError("Rutina no encontrada.");
+        }
 
         return res.status(201).json({
             statusCode: 201,
@@ -51,9 +58,13 @@ export const createRoutineExercise = async (req, res, next) => {
 
 export const getRoutineExercise = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const { routineExerciseId } = req.params;
 
-        const routineExercise = await routineExercisesRepository.findById({ routineExerciseId });
+        const routineExercise = await routineExercisesRepository.findById({
+            routineExerciseId,
+            userId
+        });
 
         if (!routineExercise) {
             return throwNotFoundError("Ejercicio de rutina no encontrado.");
@@ -71,13 +82,17 @@ export const getRoutineExercise = async (req, res, next) => {
 
 export const getRoutineExercises = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const { routineId } = req.params;
 
         if (!routineId) {
             return throwBadRequestError("routineId es requerido.");
         }
 
-        const routineExercises = await routineExercisesRepository.findAllByRoutine({ routineId });
+        const routineExercises = await routineExercisesRepository.findAllByRoutine({
+            routineId,
+            userId
+        });
 
         return res.status(200).json({
             statusCode: 200,
@@ -91,6 +106,7 @@ export const getRoutineExercises = async (req, res, next) => {
 
 export const updateRoutineExercise = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const { routineExerciseId } = req.params;
         const {
             targetSets,
@@ -102,6 +118,7 @@ export const updateRoutineExercise = async (req, res, next) => {
 
         const routineExercise = await routineExercisesRepository.update({
             routineExerciseId,
+            userId,
             targetSets,
             targetReps,
             targetWeight,
@@ -126,9 +143,10 @@ export const updateRoutineExercise = async (req, res, next) => {
 
 export const deleteRoutineExercise = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const { routineExerciseId } = req.params;
 
-        const deleted = await routineExercisesRepository.remove({ routineExerciseId });
+        const deleted = await routineExercisesRepository.remove({ routineExerciseId, userId });
 
         if (!deleted) {
             return throwNotFoundError("Ejercicio de rutina no encontrado.");
@@ -148,14 +166,28 @@ export const deleteRoutineExercise = async (req, res, next) => {
 export const updateRoutineProgress = async (req, res, next) => {
     const client = await pool.connect();
     try {
+        const { id: userId } = req.user;
         const { routineId } = req.params;
-        const { updates } = req.body; // Array de { exerciseId, newWeight }
+        const { updates } = req.body || {}; // Array de { exerciseId, newWeight }
+
+        if (!Array.isArray(updates)) {
+            return throwBadRequestError("updates debe ser un arreglo.");
+        }
 
         await client.query("BEGIN");
 
+        const ownsRoutine = await routinesRepository.existsByIdAndUser(
+            { routineId, userId },
+            client
+        );
+        if (!ownsRoutine) {
+            await client.query("ROLLBACK");
+            return throwNotFoundError("Rutina no encontrada.");
+        }
+
         for (const { exerciseId, newWeight } of updates) {
             await routineExercisesRepository.updateWeight(
-                { routineId, exerciseId, newWeight },
+                { userId, routineId, exerciseId, newWeight },
                 client // mismo client => misma transacción
             );
         }

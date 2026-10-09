@@ -4,6 +4,7 @@ import { snakeToCamel } from '../utils/utils.helper.js';
 
 export const createCardioLog = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const {
             workoutExerciseId,
             durationSeconds,
@@ -13,12 +14,17 @@ export const createCardioLog = async (req, res, next) => {
         } = req.body;
 
         const cardioLog = await cardioLogsRepository.create({
+            userId,
             workoutExerciseId,
             durationSeconds,
             distanceKm,
             calories,
             avgHeartRate
         });
+
+        if (!cardioLog) {
+            return throwNotFoundError("Ejercicio del workout no encontrado.");
+        }
 
         return res.status(201).json({
             statusCode: 201,
@@ -32,9 +38,10 @@ export const createCardioLog = async (req, res, next) => {
 
 export const getCardioLog = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const { cardioLogId } = req.params;
 
-        const cardioLog = await cardioLogsRepository.findById({ cardioLogId });
+        const cardioLog = await cardioLogsRepository.findById({ cardioLogId, userId });
 
         if (!cardioLog) {
             return throwNotFoundError("Registro de cardio no encontrado.");
@@ -52,10 +59,12 @@ export const getCardioLog = async (req, res, next) => {
 
 export const getAllCardioLogs = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const { workoutExerciseId } = req.query;
 
         const cardioLogs = await cardioLogsRepository.findAllByWorkoutExercise({
-            workoutExerciseId
+            workoutExerciseId,
+            userId
         });
 
         return res.status(200).json({
@@ -70,11 +79,13 @@ export const getAllCardioLogs = async (req, res, next) => {
 
 export const updateCardioLog = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const { cardioLogId } = req.params;
         const { durationSeconds, distanceKm, calories, avgHeartRate } = req.body || {};
 
         const cardioLog = await cardioLogsRepository.update({
             cardioLogId,
+            userId,
             durationSeconds,
             distanceKm,
             calories,
@@ -98,9 +109,10 @@ export const updateCardioLog = async (req, res, next) => {
 
 export const deleteCardioLog = async (req, res, next) => {
     try {
+        const { id: userId } = req.user;
         const { cardioLogId } = req.params;
 
-        const deleted = await cardioLogsRepository.remove({ cardioLogId });
+        const deleted = await cardioLogsRepository.remove({ cardioLogId, userId });
 
         if (!deleted) {
             return throwNotFoundError("Registro de cardio no encontrado.");
