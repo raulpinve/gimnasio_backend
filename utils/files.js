@@ -1,19 +1,22 @@
-import fs from 'fs/promises';
+import fs from "node:fs/promises";
 import path from 'path';
 
 export const crearCarpeta = async (uploadDir) => {
     await fs.mkdir(uploadDir, { recursive: true });
 };
 
-export const subirArchivo = (fileTempPath, uploadDir) => {
-    return new Promise((resolve, reject) => {
-        require("fs").rename(fileTempPath, uploadDir, (err) => {
-            if (err) {
-                return reject(err);
-            }
-            resolve(uploadDir);
-        });
-    });
+export const subirArchivo = async (origen, destino) => {
+    try {
+        await fs.rename(origen, destino);
+    } catch (err) {
+        // EXDEV: origen y destino están en discos distintos (común en Windows con %TEMP%)
+        if (err.code === "EXDEV") {
+            await fs.copyFile(origen, destino);
+            await fs.unlink(origen);
+        } else {
+            throw err;
+        }
+    }
 };
 
 export const validateSizeFile = (file, maxSize) => {

@@ -16,6 +16,7 @@ import {
 } from '../utils/files.js';
 
 import { fileURLToPath } from 'url';
+import { withMediaUrls } from '../utils/media.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -29,12 +30,17 @@ const toArray = (value) => {
 const exerciseFolder = (exerciseId) =>
     path.join(__dirname, `../uploads/exercises/${exerciseId}`);
 
+// Con formidable v3 cada campo llega como array, con v2 como objeto suelto.
+// Esto acepta ambos formatos.
+const firstFile = (f) => (Array.isArray(f) ? f[0] : f);
+
 export const createExercise = async (req, res, next) => {
-    const imageFile = req.files['image']?.[0];
-    const videoFile = req.files['video']?.[0];
+    const imageFile = firstFile(req.files?.image);
+    const videoFile = firstFile(req.files?.video);
 
     const { name, type, muscleGroups, equipment, description } = req.body;
 
+    let exercise = null;
     let imagePath = null;
     let thumbPath = null;
     let videoPath = null;
@@ -59,7 +65,7 @@ export const createExercise = async (req, res, next) => {
         }
 
         // 1. Insertar ejercicio (Postgres genera el UUID)
-        const exercise = await exercisesRepository.insert({
+        exercise = await exercisesRepository.insert({
             name,
             type: type || 'strength',
             muscleGroups: toArray(muscleGroups) || [],
@@ -112,10 +118,13 @@ export const createExercise = async (req, res, next) => {
             data: snakeToCamel(updated)
         });
     } catch (error) {
+        console.error("createExercise falló:", error);
+
         await Promise.allSettled([
             eliminarArchivo(imagePath),
             eliminarArchivo(thumbPath),
-            eliminarArchivo(videoPath)
+            eliminarArchivo(videoPath),
+            exercise ? exercisesRepository.deleteById(exercise.id) : null,
         ]);
         next(error);
     }
@@ -140,7 +149,7 @@ export const getExercise = async (req, res, next) => {
             statusCode: 200,
             status: 'success',
             data: {
-                ...snakeToCamel(exercise),
+                ...withMediaUrls(req, snakeToCamel(exercise)),   // ← cambio
                 descriptionText: exercise.description || '',
                 description: {
                     positionInicial: secciones[0] || '',
@@ -178,7 +187,7 @@ export const getAllExercises = async (req, res, next) => {
             statusCode: 200,
             status: 'success',
             pagination: { currentPage: page, totalPages, totalRecords },
-            data: rows.map(snakeToCamel)
+            data: rows.map((row) => withMediaUrls(req, snakeToCamel(row)))
         });
     } catch (error) {
         next(error);

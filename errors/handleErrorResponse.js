@@ -3,7 +3,7 @@ import handleHTTPThrowErrors from './handleHTTPThrowErrors.js';
 // Main function to handle error responses of the application
 const handleErrorResponse = (err, req, res, next) => {  
     let errorObject; 
-    
+
     if (err.type === 'entity.parse.failed') {
         errorObject = handleHTTPThrowErrors.handleBadRequestError("JSON inválido o vacío");
         return res.status(errorObject.statusCode).json(errorObject);
