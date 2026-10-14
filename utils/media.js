@@ -4,7 +4,7 @@ const baseUrl = (req) =>
 
 // Recibe un ejercicio ya en camelCase y convierte los nombres de archivo en URLs
 export const withMediaUrls = (req, exercise) => {
-    const folder = `${baseUrl(req)}/uploads/${exercise.id}`;
+    const folder = `${baseUrl(req)}/api/uploads/exercises/${exercise.id}`;
     const url = (file) => (file ? `${folder}/${encodeURIComponent(file)}` : null);
 
     return {
